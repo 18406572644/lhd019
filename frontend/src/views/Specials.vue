@@ -602,8 +602,10 @@ function getDefaultImage(): string {
   return 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=luxury%20signature%20cocktail%20golden%20garnish%20dark%20bar%20background&image_size=square'
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string | undefined | null): string {
+  if (!dateStr) return '-'
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return '-'
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',

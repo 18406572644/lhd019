@@ -278,11 +278,55 @@ const mockLowStockIngredients: LowStockItem[] = [
   { id: 4, name: '红石榴糖浆', category: '糖浆', stock: 1, unit: '瓶', min_stock: 3 }
 ]
 
-const formatNumber = (num: number): string => {
-  if (num >= 10000) {
-    return (num / 10000).toFixed(1) + '万'
+const formatNumber = (num: number | undefined | null): string => {
+  if (num === undefined || num === null || isNaN(num)) {
+    return '0'
   }
-  return num.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  const n = Number(num)
+  if (n >= 10000) {
+    return (n / 10000).toFixed(1) + '万'
+  }
+  return n.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+}
+
+const mapSummaryData = (raw: any): SummaryData => ({
+  totalRevenue: raw?.total_revenue ?? 0,
+  totalOrders: raw?.total_orders ?? 0,
+  totalCustomers: raw?.total_customers ?? 0,
+  avgOrderValue: raw?.average_order ?? 0,
+  revenueTrend: raw?.revenue_trend ?? 0,
+  ordersTrend: raw?.orders_trend ?? 0,
+  customersTrend: raw?.customers_trend ?? 0,
+  avgValueTrend: raw?.avg_value_trend ?? 0
+})
+
+const mapTopDrinksData = (raw: any[]): TopDrinkData[] => {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item: any) => ({
+    name: item?.recipe_name ?? '未知饮品',
+    sales: Number(item?.quantity ?? 0),
+    revenue: Number(item?.revenue ?? 0)
+  }))
+}
+
+const mapDailyRevenueData = (raw: any[]): DailyRevenueData[] => {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item: any) => ({
+    date: item?.date ? item.date.substring(5) : '未知',
+    revenue: Number(item?.revenue ?? 0)
+  }))
+}
+
+const mapLowStockData = (raw: any[]): LowStockItem[] => {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item: any) => ({
+    id: item?.id ?? 0,
+    name: item?.name ?? '未知商品',
+    category: item?.category ?? '其他',
+    stock: Number(item?.stock_quantity ?? item?.stock ?? 0),
+    unit: item?.unit ?? '',
+    min_stock: Number(item?.min_stock ?? 0)
+  }))
 }
 
 const fetchDashboardData = async () => {
@@ -295,17 +339,14 @@ const fetchDashboardData = async () => {
     ])
 
     if (summaryRes.data.code === 0 && summaryRes.data.data) {
-      summaryData.value = summaryRes.data.data
-      if (summaryRes.data.data.daily_revenue) {
-        dailyRevenueData.value = summaryRes.data.data.daily_revenue
-      } else {
-        dailyRevenueData.value = mockDailyRevenueData
-      }
-      if (summaryRes.data.data.top_drinks) {
-        topDrinksData.value = summaryRes.data.data.top_drinks
-      } else {
-        topDrinksData.value = mockTopDrinksData
-      }
+      const rawData = summaryRes.data.data
+      summaryData.value = mapSummaryData(rawData)
+      dailyRevenueData.value = rawData.daily_revenue?.length
+        ? mapDailyRevenueData(rawData.daily_revenue)
+        : mockDailyRevenueData
+      topDrinksData.value = rawData.top_drinks?.length
+        ? mapTopDrinksData(rawData.top_drinks)
+        : mockTopDrinksData
     } else {
       summaryData.value = mockSummaryData
       dailyRevenueData.value = mockDailyRevenueData
@@ -313,13 +354,13 @@ const fetchDashboardData = async () => {
     }
 
     if (spiritsRes.data.code === 0 && spiritsRes.data.data) {
-      lowStockSpirits.value = spiritsRes.data.data
+      lowStockSpirits.value = mapLowStockData(spiritsRes.data.data)
     } else {
       lowStockSpirits.value = mockLowStockSpirits
     }
 
     if (ingredientsRes.data.code === 0 && ingredientsRes.data.data) {
-      lowStockIngredients.value = ingredientsRes.data.data
+      lowStockIngredients.value = mapLowStockData(ingredientsRes.data.data)
     } else {
       lowStockIngredients.value = mockLowStockIngredients
     }
@@ -370,7 +411,8 @@ const initRevenueChart = () => {
       },
       formatter: (params: any) => {
         const data = params[0]
-        return `${data.name}<br/>收入: <span style="color: #d4af37; font-weight: 600;">¥${data.value.toLocaleString()}</span>`
+        const value = data?.value ?? 0
+        return `${data?.name ?? '未知'}<br/>收入: <span style="color: #d4af37; font-weight: 600;">¥${formatNumber(value)}</span>`
       }
     },
     grid: {
@@ -481,8 +523,11 @@ const initDrinksChart = () => {
       },
       formatter: (params: any) => {
         const data = params[0]
-        const drink = topDrinksData.value.find(d => d.name === data.name)
-        return `${data.name}<br/>销量: <span style="color: #d4af37; font-weight: 600;">${data.value} 杯</span><br/>收入: <span style="color: #e94560;">¥${drink?.revenue.toLocaleString()}</span>`
+        const name = data?.name ?? '未知饮品'
+        const value = data?.value ?? 0
+        const drink = topDrinksData.value.find(d => d.name === name)
+        const revenue = drink?.revenue ?? 0
+        return `${name}<br/>销量: <span style="color: #d4af37; font-weight: 600;">${value} 杯</span><br/>收入: <span style="color: #e94560;">¥${formatNumber(revenue)}</span>`
       }
     },
     grid: {

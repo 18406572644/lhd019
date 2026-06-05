@@ -114,12 +114,12 @@
                 <el-table-column prop="unit" label="单位" width="80" align="center" />
                 <el-table-column prop="unit_price" label="单价" width="120" align="right">
                   <template #default="{ row }">
-                    <span>¥{{ row.unit_price.toFixed(2) }}</span>
+                    <span>¥{{ formatSafe(row.unit_price) }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column prop="subtotal" label="小计" width="120" align="right">
                   <template #default="{ row }">
-                    <span class="subtotal">¥{{ row.subtotal.toFixed(2) }}</span>
+                    <span class="subtotal">¥{{ formatSafe(row.subtotal) }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column prop="batch_no" label="批号" width="120" align="center">
@@ -139,23 +139,35 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="purchase_no" label="采购单号" min-width="180">
+        <el-table-column label="采购单号" min-width="180">
           <template #default="{ row }">
-            <span class="purchase-no">{{ row.purchase_no }}</span>
+            <span class="purchase-no">{{ safeString(row.purchase_no) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="supplier" label="供应商" min-width="150" />
-
-        <el-table-column prop="purchase_date" label="采购日期" width="120" align="center" />
-
-        <el-table-column prop="total_amount" label="总金额" width="130" align="right">
+        <el-table-column label="供应商" min-width="150">
           <template #default="{ row }">
-            <span class="total-amount">¥{{ row.total_amount.toFixed(2) }}</span>
+            <span class="supplier-text">{{ safeString(row.supplier) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="operator" label="操作员" width="100" align="center" />
+        <el-table-column label="采购日期" width="120" align="center">
+          <template #default="{ row }">
+            <span>{{ safeString(row.purchase_date) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="总金额" width="130" align="right">
+          <template #default="{ row }">
+            <span class="total-amount">¥{{ formatSafe(row.total_amount) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作员" width="100" align="center">
+          <template #default="{ row }">
+            <span class="operator-text">{{ safeString(row.operator) }}</span>
+          </template>
+        </el-table-column>
 
         <el-table-column prop="remark" label="备注" min-width="150">
           <template #default="{ row }">
@@ -400,6 +412,59 @@ import {
 } from '@element-plus/icons-vue'
 import { api, type Purchase, type PurchaseItem, type PurchaseForm as PurchaseFormType, type PurchaseItemForm, type Spirit, type Ingredient } from '@/api'
 
+const mockPurchases: Purchase[] = [
+  {
+    id: 1,
+    purchase_no: 'CG20260601001',
+    supplier: '上海名酒汇贸易有限公司',
+    total_amount: 28500.00,
+    purchase_date: '2026-06-01',
+    operator: '张经理',
+    remark: '月度常规采购',
+    created_at: '2026-06-01T10:30:00Z',
+    updated_at: '2026-06-01T10:30:00Z',
+    purchase_items: [
+      { id: 1, purchase_id: 1, ingredient_type: 'spirit', ingredient_id: 1, ingredient_name: '麦卡伦12年', quantity: 6, unit: '瓶', unit_price: 3800, subtotal: 22800, batch_no: 'M20260501', expiry_date: '2030-12-31', created_at: '' },
+      { id: 2, purchase_id: 1, ingredient_type: 'spirit', ingredient_id: 3, ingredient_name: '灰雁伏特加', quantity: 12, unit: '瓶', unit_price: 475, subtotal: 5700, batch_no: 'G20260415', expiry_date: '2028-06-30', created_at: '' }
+    ]
+  },
+  {
+    id: 2,
+    purchase_no: 'CG20260603002',
+    supplier: '北京佳饮配送中心',
+    total_amount: 5680.00,
+    purchase_date: '2026-06-03',
+    operator: '李调酒师',
+    remark: '补充辅料库存',
+    created_at: '2026-06-03T14:20:00Z',
+    updated_at: '2026-06-03T14:20:00Z',
+    purchase_items: [
+      { id: 3, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 26, ingredient_name: '新鲜薄荷叶', quantity: 2000, unit: 'g', unit_price: 0.8, subtotal: 1600, batch_no: 'B20260603', expiry_date: '2026-06-10', created_at: '' },
+      { id: 4, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 27, ingredient_name: '青柠', quantity: 100, unit: '个', unit_price: 3.5, subtotal: 350, batch_no: 'Q20260602', expiry_date: '2026-06-15', created_at: '' },
+      { id: 5, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 16, ingredient_name: '安格斯特拉苦精', quantity: 12, unit: '瓶', unit_price: 180, subtotal: 2160, batch_no: 'A20260301', expiry_date: '2027-03-31', created_at: '' },
+      { id: 6, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 21, ingredient_name: '红石榴糖浆', quantity: 6, unit: '瓶', unit_price: 260, subtotal: 1560, batch_no: 'H20260215', expiry_date: '2027-02-28', created_at: '' }
+    ]
+  },
+  {
+    id: 3,
+    purchase_no: 'CG20260605003',
+    supplier: '广州烈酒进出口公司',
+    total_amount: 42300.00,
+    purchase_date: '2026-06-05',
+    operator: '王店长',
+    remark: '高端烈酒补货',
+    created_at: '2026-06-05T09:15:00Z',
+    updated_at: '2026-06-05T09:15:00Z',
+    purchase_items: [
+      { id: 7, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 2, ingredient_name: '尊尼获加黑牌', quantity: 12, unit: '瓶', unit_price: 580, subtotal: 6960, batch_no: 'J20260420', expiry_date: '2029-08-15', created_at: '' },
+      { id: 8, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 5, ingredient_name: '百加得白朗姆8年', quantity: 6, unit: '瓶', unit_price: 720, subtotal: 4320, batch_no: 'B20260310', expiry_date: '2028-11-20', created_at: '' },
+      { id: 9, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 12, ingredient_name: '轩尼诗VSOP', quantity: 6, unit: '瓶', unit_price: 1680, subtotal: 10080, batch_no: 'H20260105', expiry_date: '2030-01-10', created_at: '' },
+      { id: 10, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 7, ingredient_name: '培恩银龙舌兰', quantity: 12, unit: '瓶', unit_price: 420, subtotal: 5040, batch_no: 'P20260228', expiry_date: '2027-12-31', created_at: '' },
+      { id: 11, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 15, ingredient_name: '添加利十号金酒', quantity: 12, unit: '瓶', unit_price: 380, subtotal: 4560, batch_no: 'T20260315', expiry_date: '2028-05-20', created_at: '' }
+    ]
+  }
+]
+
 const loading = ref(false)
 const submitting = ref(false)
 const purchases = ref<Purchase[]>([])
@@ -464,11 +529,15 @@ const filteredPurchases = computed(() => {
   if (supplierKeyword.value) {
     const keyword = supplierKeyword.value.toLowerCase()
     result = result.filter(p =>
-      p.supplier.toLowerCase().includes(keyword)
+      (p.supplier || '').toLowerCase().includes(keyword)
     )
   }
 
-  return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  return result.sort((a, b) => {
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+    return dateB - dateA
+  })
 })
 
 const paginatedPurchases = computed(() => {
@@ -483,12 +552,24 @@ const formTotalAmount = computed(() => {
   }, 0)
 })
 
-const formatNumber = (num: number): string => {
-  return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const formatNumber = (num: number | undefined | null): string => {
+  if (num === undefined || num === null || isNaN(num)) {
+    return '0.00'
+  }
+  return Number(num).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-const formatDateTime = (dateStr: string): string => {
+const formatSafe = (num: number | undefined | null, decimals: number = 2): string => {
+  if (num === undefined || num === null || isNaN(num)) {
+    return '0.' + '0'.repeat(decimals)
+  }
+  return Number(num).toFixed(decimals)
+}
+
+const formatDateTime = (dateStr: string | undefined | null): string => {
+  if (!dateStr) return '-'
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return '-'
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -496,6 +577,13 @@ const formatDateTime = (dateStr: string): string => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+const safeString = (str: string | undefined | null, defaultValue: string = '-'): string => {
+  if (str === undefined || str === null || str === '') {
+    return defaultValue
+  }
+  return String(str)
 }
 
 const getIngredientsByType = (type: 'spirit' | 'ingredient') => {
@@ -519,13 +607,14 @@ const fetchPurchases = async () => {
 
     const res = await api.getPurchases(params)
     if (res.data.code === 0) {
-      purchases.value = res.data.data || []
+      purchases.value = res.data.data || mockPurchases
     } else {
-      ElMessage.error(res.data.message || '获取采购列表失败')
+      purchases.value = mockPurchases
+      ElMessage.error(res.data.message || '获取采购列表失败，使用本地数据')
     }
   } catch (error) {
-    console.error('获取采购列表失败:', error)
-    ElMessage.error('获取采购列表失败')
+    console.error('获取采购列表失败，使用本地数据:', error)
+    purchases.value = mockPurchases
   } finally {
     loading.value = false
   }

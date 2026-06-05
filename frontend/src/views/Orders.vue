@@ -545,12 +545,17 @@ const actualAmount = computed(() => {
   return Math.max(0, totalAmount.value - orderForm.value.discount)
 })
 
-const formatNumber = (num: number): string => {
-  return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const formatNumber = (num: number | undefined | null): string => {
+  if (num === undefined || num === null || isNaN(num)) {
+    return '0.00'
+  }
+  return Number(num).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-const formatDateTime = (dateStr: string): string => {
+const formatDateTime = (dateStr: string | undefined | null): string => {
+  if (!dateStr) return '-'
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return '-'
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -558,6 +563,13 @@ const formatDateTime = (dateStr: string): string => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+const safeString = (str: string | undefined | null, defaultValue: string = '-'): string => {
+  if (str === undefined || str === null || str === '') {
+    return defaultValue
+  }
+  return String(str)
 }
 
 const getStatusLabel = (status: string): string => {
