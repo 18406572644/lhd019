@@ -135,14 +135,14 @@
                   </template>
                 </el-table-column>
                 <el-table-column prop="quantity" label="数量" width="100" align="center" />
-                <el-table-column prop="unit_price" label="单价" width="120" align="right">
+                <el-table-column label="单价" width="120" align="right">
                   <template #default="{ row }">
-                    <span>¥{{ row.unit_price.toFixed(2) }}</span>
+                    <span>¥{{ formatSafe(row.unit_price) }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="subtotal" label="小计" width="120" align="right">
+                <el-table-column label="小计" width="120" align="right">
                   <template #default="{ row }">
-                    <span class="subtotal">¥{{ row.subtotal.toFixed(2) }}</span>
+                    <span class="subtotal">¥{{ formatSafe(row.subtotal) }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column prop="remark" label="备注" min-width="150">
@@ -156,50 +156,54 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="order_no" label="订单号" min-width="160">
+        <el-table-column label="订单号" min-width="160">
           <template #default="{ row }">
-            <span class="order-no">{{ row.order_no }}</span>
+            <span class="order-no">{{ safeString(row.order_no) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="table_no" label="桌号" width="100" align="center">
+        <el-table-column label="桌号" width="100" align="center">
           <template #default="{ row }">
-            <span v-if="row.table_no" class="table-no">{{ row.table_no }}</span>
+            <span v-if="safeString(row.table_no, '') !== ''" class="table-no">{{ safeString(row.table_no) }}</span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="customer_count" label="人数" width="80" align="center" />
-
-        <el-table-column prop="total_amount" label="总金额" width="120" align="right">
+        <el-table-column label="人数" width="80" align="center">
           <template #default="{ row }">
-            <span>¥{{ row.total_amount.toFixed(2) }}</span>
+            <span>{{ row.customer_count ?? '-' }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="discount" label="折扣" width="100" align="right">
+        <el-table-column label="总金额" width="120" align="right">
           <template #default="{ row }">
-            <span v-if="row.discount > 0" class="discount">-¥{{ row.discount.toFixed(2) }}</span>
+            <span>¥{{ formatSafe(row.total_amount) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="折扣" width="100" align="right">
+          <template #default="{ row }">
+            <span v-if="row.discount > 0" class="discount">-¥{{ formatSafe(row.discount) }}</span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="actual_amount" label="实收金额" width="120" align="right">
+        <el-table-column label="实收金额" width="120" align="right">
           <template #default="{ row }">
-            <span class="actual-amount">¥{{ row.actual_amount.toFixed(2) }}</span>
+            <span class="actual-amount">¥{{ formatSafe(row.actual_amount) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="payment_method" label="支付方式" width="100" align="center">
+        <el-table-column label="支付方式" width="100" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.payment_method" size="small" effect="dark">
-              {{ getPaymentMethodLabel(row.payment_method) }}
+            <el-tag v-if="safeString(row.payment_method, '') !== ''" size="small" effect="dark">
+              {{ getPaymentMethodLabel(safeString(row.payment_method)) }}
             </el-tag>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" label="状态" width="100" align="center">
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" effect="dark" size="small">
               {{ getStatusLabel(row.status) }}
@@ -207,7 +211,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="created_at" label="创建时间" width="170">
+        <el-table-column label="创建时间" width="170">
           <template #default="{ row }">
             <span class="created-at">{{ formatDateTime(row.created_at) }}</span>
           </template>
@@ -312,14 +316,14 @@
                     :value="recipe.id"
                   >
                     <span>{{ recipe.name }}</span>
-                    <span style="float: right; color: #d4af37;">¥{{ recipe.price.toFixed(2) }}</span>
+                    <span style="float: right; color: #d4af37;">¥{{ formatSafe(recipe.price) }}</span>
                   </el-option>
                 </el-select>
               </template>
             </el-table-column>
             <el-table-column label="单价" width="120" align="right">
               <template #default="{ row }">
-                <span>¥{{ getRecipePrice(row.recipe_id).toFixed(2) }}</span>
+                <span>¥{{ formatSafe(getRecipePrice(row.recipe_id)) }}</span>
               </template>
             </el-table-column>
             <el-table-column label="数量" width="120" align="center">
@@ -335,7 +339,7 @@
             </el-table-column>
             <el-table-column label="小计" width="120" align="right">
               <template #default="{ row }">
-                <span class="subtotal">¥{{ (getRecipePrice(row.recipe_id) * row.quantity).toFixed(2) }}</span>
+                <span class="subtotal">¥{{ formatSafe(getRecipePrice(row.recipe_id) * row.quantity) }}</span>
               </template>
             </el-table-column>
             <el-table-column label="备注" min-width="150">
@@ -362,15 +366,15 @@
         <div class="amount-summary">
           <div class="amount-row">
             <span class="amount-label">总金额：</span>
-            <span class="amount-value">¥{{ totalAmount.toFixed(2) }}</span>
+            <span class="amount-value">¥{{ formatSafe(totalAmount) }}</span>
           </div>
           <div class="amount-row discount-row">
             <span class="amount-label">折扣：</span>
-            <span class="amount-value">-¥{{ orderForm.discount.toFixed(2) }}</span>
+            <span class="amount-value">-¥{{ formatSafe(orderForm.discount) }}</span>
           </div>
           <div class="amount-row actual-row">
             <span class="amount-label">实收金额：</span>
-            <span class="amount-value gold-text">¥{{ actualAmount.toFixed(2) }}</span>
+            <span class="amount-value gold-text">¥{{ formatSafe(actualAmount) }}</span>
           </div>
         </div>
       </el-form>
@@ -566,39 +570,58 @@ const formatDateTime = (dateStr: string | undefined | null): string => {
 }
 
 const safeString = (str: string | undefined | null, defaultValue: string = '-'): string => {
-  if (str === undefined || str === null || str === '') {
+  if (str === undefined || str === null || str === '' || str === 'null' || str === 'undefined') {
     return defaultValue
   }
-  return String(str)
+  try {
+    return String(str).trim()
+  } catch {
+    return defaultValue
+  }
+}
+
+const formatSafe = (num: number | undefined | null, decimals: number = 2): string => {
+  if (num === undefined || num === null || isNaN(num)) {
+    return '0.' + '0'.repeat(decimals)
+  }
+  return Number(num).toFixed(decimals)
 }
 
 const getStatusLabel = (status: string): string => {
+  const s = safeString(status, '')
   const map: Record<string, string> = {
     completed: '已完成',
     pending: '待处理',
     cancelled: '已取消'
   }
-  return map[status] || status
+  return map[s] || (s ? s : '-')
 }
 
 const getStatusType = (status: string): 'success' | 'warning' | 'danger' | 'info' => {
+  const s = safeString(status, '')
   const map: Record<string, 'success' | 'warning' | 'danger' | 'info'> = {
     completed: 'success',
     pending: 'warning',
     cancelled: 'danger'
   }
-  return map[status] || 'info'
+  return map[s] || 'info'
 }
 
 const getPaymentMethodLabel = (method: string): string => {
+  const m = safeString(method, '')
   const map: Record<string, string> = {
     cash: '现金',
-    wechat: '微信',
+    wechat: '微信支付',
     alipay: '支付宝',
     card: '刷卡',
-    credit: '挂账'
+    credit: '挂账',
+    微信支付: '微信支付',
+    支付宝: '支付宝',
+    现金: '现金',
+    刷卡: '刷卡',
+    挂账: '挂账'
   }
-  return map[method] || method
+  return map[m] || (m ? m : '-')
 }
 
 const getRecipePrice = (recipeId: number): number => {

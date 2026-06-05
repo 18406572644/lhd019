@@ -300,11 +300,22 @@ const mapSummaryData = (raw: any): SummaryData => ({
   avgValueTrend: raw?.avg_value_trend ?? 0
 })
 
+const safeName = (name: string | undefined | null, defaultVal: string = '未知饮品'): string => {
+  if (!name || name === '' || name === 'null' || name === 'undefined') {
+    return defaultVal
+  }
+  try {
+    return String(name).trim()
+  } catch {
+    return defaultVal
+  }
+}
+
 const mapTopDrinksData = (raw: any[]): TopDrinkData[] => {
-  if (!Array.isArray(raw)) return []
+  if (!Array.isArray(raw) || raw.length === 0) return []
   return raw.map((item: any) => ({
-    name: item?.recipe_name ?? '未知饮品',
-    sales: Number(item?.quantity ?? 0),
+    name: safeName(item?.recipe_name ?? item?.name),
+    sales: Number(item?.quantity ?? item?.sales ?? 0),
     revenue: Number(item?.revenue ?? 0)
   }))
 }
@@ -509,6 +520,10 @@ const initDrinksChart = () => {
 
   drinksChart = echarts.init(drinksChartRef.value)
 
+  const chartData = topDrinksData.value.length > 0 ? topDrinksData.value : mockTopDrinksData
+  const yAxisData = chartData.map(item => safeName(item.name)).reverse()
+  const seriesData = chartData.map(item => Number(item.sales) || 0).reverse()
+
   const option: echarts.EChartsOption = {
     tooltip: {
       trigger: 'axis',
@@ -523,9 +538,9 @@ const initDrinksChart = () => {
       },
       formatter: (params: any) => {
         const data = params[0]
-        const name = data?.name ?? '未知饮品'
+        const name = safeName(data?.name)
         const value = data?.value ?? 0
-        const drink = topDrinksData.value.find(d => d.name === name)
+        const drink = chartData.find(d => safeName(d.name) === name)
         const revenue = drink?.revenue ?? 0
         return `${name}<br/>销量: <span style="color: #d4af37; font-weight: 600;">${value} 杯</span><br/>收入: <span style="color: #e94560;">¥${formatNumber(revenue)}</span>`
       }
@@ -556,7 +571,7 @@ const initDrinksChart = () => {
     },
     yAxis: {
       type: 'category',
-      data: topDrinksData.value.map(item => item.name).reverse(),
+      data: yAxisData,
       axisLine: {
         lineStyle: {
           color: 'rgba(255, 255, 255, 0.1)'
@@ -564,7 +579,8 @@ const initDrinksChart = () => {
       },
       axisLabel: {
         color: '#f5f5f5',
-        fontWeight: 500
+        fontWeight: 500,
+        formatter: (value: string) => safeName(value)
       }
     },
     series: [
@@ -600,12 +616,12 @@ const initDrinksChart = () => {
           fontWeight: 600,
           formatter: '{c} 杯'
         },
-        data: topDrinksData.value.map(item => item.sales).reverse()
+        data: seriesData
       }
     ]
   }
 
-  drinksChart.setOption(option)
+  drinksChart.setOption(option, true)
 }
 
 const handleResize = () => {

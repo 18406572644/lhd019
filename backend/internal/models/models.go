@@ -220,3 +220,166 @@ type WasteCreateRequest struct {
 	Operator       string  `json:"operator"`
 	Remark         string  `json:"remark"`
 }
+
+type OperatingCost struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	CostType    string    `gorm:"type:varchar(50);not null" json:"cost_type"`
+	CostName    string    `gorm:"type:varchar(100);not null" json:"cost_name"`
+	Amount      float64   `gorm:"type:decimal(10,2);not null" json:"amount"`
+	Period      string    `gorm:"type:varchar(20);not null;default:'monthly'" json:"period"`
+	IsFixed     bool      `gorm:"type:boolean;default:true" json:"is_fixed"`
+	Description string    `gorm:"type:text" json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type RevenueReport struct {
+	Period           string  `json:"period"`
+	StartDate        string  `json:"start_date"`
+	EndDate          string  `json:"end_date"`
+	TotalRevenue     float64 `json:"total_revenue"`
+	TotalOrders      int64   `json:"total_orders"`
+	TotalCustomers   int64   `json:"total_customers"`
+	AverageOrder     float64 `json:"average_order"`
+	AverageCustomer  float64 `json:"average_customer"`
+	YoYGrowth        float64 `json:"yoy_growth"`
+	QoQGrowth        float64 `json:"qoq_growth"`
+	YoYPrevious      float64 `json:"yoy_previous"`
+	QoQPrevious      float64 `json:"qoq_previous"`
+}
+
+type CostAnalysisReport struct {
+	Period              string  `json:"period"`
+	StartDate           string  `json:"start_date"`
+	EndDate             string  `json:"end_date"`
+	TotalRevenue        float64 `json:"total_revenue"`
+	IngredientCost      float64 `json:"ingredient_cost"`
+	SpiritCost          float64 `json:"spirit_cost"`
+	TotalMaterialCost   float64 `json:"total_material_cost"`
+	WasteCost           float64 `json:"waste_cost"`
+	PurchaseCost        float64 `json:"purchase_cost"`
+	OperatingCost       float64 `json:"operating_cost"`
+	TotalCost           float64 `json:"total_cost"`
+	GrossProfit         float64 `json:"gross_profit"`
+	GrossMargin         float64 `json:"gross_margin"`
+	NetProfit           float64 `json:"net_profit"`
+	NetMargin           float64 `json:"net_margin"`
+	CostBreakdown       []CostBreakdownItem `json:"cost_breakdown"`
+}
+
+type CostBreakdownItem struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
+	Ratio float64 `json:"ratio"`
+}
+
+type CategorySalesReport struct {
+	Period        string          `json:"period"`
+	StartDate     string          `json:"start_date"`
+	EndDate       string          `json:"end_date"`
+	CategorySales []CategorySales `json:"category_sales"`
+	RecipeSales   []RecipeSales   `json:"recipe_sales"`
+	TimeSlotSales []TimeSlotSales `json:"time_slot_sales"`
+}
+
+type CategorySales struct {
+	Category   string  `json:"category"`
+	Quantity   int64   `json:"quantity"`
+	Revenue    float64 `json:"revenue"`
+	Percentage float64 `json:"percentage"`
+}
+
+type RecipeSales struct {
+	RecipeID     uint    `json:"recipe_id"`
+	RecipeName   string  `json:"recipe_name"`
+	Category     string  `json:"category"`
+	Quantity     int64   `json:"quantity"`
+	Revenue      float64 `json:"revenue"`
+	Cost         float64 `json:"cost"`
+	Profit       float64 `json:"profit"`
+	ProfitMargin float64 `json:"profit_margin"`
+}
+
+type TimeSlotSales struct {
+	TimeSlot string  `json:"time_slot"`
+	Quantity int64   `json:"quantity"`
+	Revenue  float64 `json:"revenue"`
+	Orders   int64   `json:"orders"`
+}
+
+type PaymentReconciliation struct {
+	Period             string                  `json:"period"`
+	StartDate          string                  `json:"start_date"`
+	EndDate            string                  `json:"end_date"`
+	TotalRevenue       float64                 `json:"total_revenue"`
+	PaymentMethods     []PaymentMethodDetail   `json:"payment_methods"`
+	ReconciliationLogs []ReconciliationLog     `json:"reconciliation_logs"`
+}
+
+type PaymentMethodDetail struct {
+	PaymentMethod string  `json:"payment_method"`
+	OrderCount    int64   `json:"order_count"`
+	TotalAmount   float64 `json:"total_amount"`
+	Percentage    float64 `json:"percentage"`
+}
+
+type ReconciliationLog struct {
+	ID            uint      `json:"id"`
+	OrderNo       string    `json:"order_no"`
+	PaymentMethod string    `json:"payment_method"`
+	SystemAmount  float64   `json:"system_amount"`
+	ActualAmount  float64   `json:"actual_amount"`
+	Difference    float64   `json:"difference"`
+	Status        string    `json:"status"`
+	ReconciledAt  string    `json:"reconciled_at"`
+	Remark        string    `json:"remark"`
+}
+
+type ProfitReport struct {
+	Period            string  `json:"period"`
+	StartDate         string  `json:"start_date"`
+	EndDate           string  `json:"end_date"`
+	TotalRevenue      float64 `json:"total_revenue"`
+	MaterialCost      float64 `json:"material_cost"`
+	WasteCost         float64 `json:"waste_cost"`
+	OperatingCost     float64 `json:"operating_cost"`
+	TotalExpenses     float64 `json:"total_expenses"`
+	GrossProfit       float64 `json:"gross_profit"`
+	GrossMargin       float64 `json:"gross_margin"`
+	NetProfit         float64 `json:"net_profit"`
+	NetMargin         float64 `json:"net_margin"`
+	ProfitBreakdown   []ProfitBreakdownItem `json:"profit_breakdown"`
+}
+
+type ProfitBreakdownItem struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
+	Type  string  `json:"type"`
+}
+
+type FinanceFilterParams struct {
+	StartDate    string `form:"start_date"`
+	EndDate      string `form:"end_date"`
+	Period       string `form:"period"`
+	Category     string `form:"category"`
+	PaymentMethod string `form:"payment_method"`
+}
+
+type CustomReportConfig struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	ReportName  string    `gorm:"type:varchar(100);not null" json:"report_name"`
+	ReportType  string    `gorm:"type:varchar(50);not null" json:"report_type"`
+	Config      string    `gorm:"type:text;not null" json:"config"`
+	CreatedBy   string    `gorm:"type:varchar(50)" json:"created_by"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type OperatingCostCreateRequest struct {
+	CostType    string  `json:"cost_type"`
+	CostName    string  `json:"cost_name"`
+	Amount      float64 `json:"amount"`
+	Period      string  `json:"period"`
+	IsFixed     bool    `json:"is_fixed"`
+	Description string  `json:"description"`
+}

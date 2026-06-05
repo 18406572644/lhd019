@@ -140,6 +140,7 @@
       :title="isEdit ? '编辑食材' : '新增食材'"
       width="500px"
       :close-on-click-modal="false"
+      @close="resetForm"
     >
       <el-form
         ref="formRef"
@@ -409,6 +410,11 @@ async function handleDelete(row: Ingredient) {
   }
 }
 
+const resetForm = () => {
+  Object.assign(formData, defaultFormData)
+  formRef.value?.resetFields()
+}
+
 async function handleSubmit() {
   if (!formRef.value) return
   
@@ -416,28 +422,24 @@ async function handleSubmit() {
     if (!valid) return
     
     try {
+      let response
       if (isEdit.value && formData.id) {
-        const response = await api.updateIngredient(formData.id, formData)
-        if (response.data.code === 200) {
-          ElMessage.success('更新成功')
-          dialogVisible.value = false
-          fetchIngredients()
-        } else {
-          ElMessage.error(response.data.message || '更新失败')
-        }
+        response = await api.updateIngredient(formData.id, formData)
       } else {
-        const response = await api.createIngredient(formData)
-        if (response.data.code === 200) {
-          ElMessage.success('创建成功')
-          dialogVisible.value = false
-          fetchIngredients()
-        } else {
-          ElMessage.error(response.data.message || '创建失败')
-        }
+        response = await api.createIngredient(formData)
       }
-    } catch (error) {
-      ElMessage.error('操作失败')
-      console.error(error)
+      
+      if (response.data.code === 0) {
+        ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
+        dialogVisible.value = false
+        resetForm()
+        fetchIngredients()
+      } else {
+        ElMessage.error(response.data.message || (isEdit.value ? '更新失败' : '创建失败'))
+      }
+    } catch (error: any) {
+      console.error('操作失败:', error)
+      ElMessage.error(error.response?.data?.message || '操作失败，请重试')
     }
   })
 }
