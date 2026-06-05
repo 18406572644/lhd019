@@ -1,0 +1,251 @@
+@import './variables.scss';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: $dark-bg;
+  color: $text-primary;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $dark-bg-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $primary-gold;
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
+}
+
+.gold-text {
+  color: $primary-gold;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.glow-button {
+  background: linear-gradient(135deg, $primary-gold, $secondary-gold);
+  border: none;
+  color: $dark-bg;
+  font-weight: 600;
+  transition: all $transition-normal;
+  box-shadow: $shadow-gold;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+  }
+}
+
+.el-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: $border-radius-lg !important;
+  box-shadow: $shadow-md !important;
+  color: $text-primary !important;
+
+  .el-card__header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: $primary-gold !important;
+    font-weight: 600;
+  }
+
+  .el-card__body {
+    color: $text-primary !important;
+  }
+}
+
+.el-table {
+  --el-table-bg-color: transparent !important;
+  --el-table-tr-bg-color: transparent !important;
+  --el-table-header-bg-color: rgba(255, 255, 255, 0.05) !important;
+  --el-table-border-color: rgba(255, 255, 255, 0.1) !important;
+  --el-table-text-color: $text-primary !important;
+  --el-table-header-text-color: $primary-gold !important;
+  --el-table-row-hover-bg-color: rgba(212, 175, 55, 0.1) !important;
+
+  th.el-table__cell {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: $primary-gold !important;
+    font-weight: 600 !important;
+  }
+
+  td.el-table__cell {
+    color: $text-primary !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .el-table__row:hover > td {
+    background-color: rgba(212, 175, 55, 0.1) !important;
+  }
+}
+
+.el-input,
+.el-select,
+.el-date-picker,
+.el-textarea {
+  --el-input-bg-color: rgba(255, 255, 255, 0.05) !important;
+  --el-input-border-color: rgba(255, 255, 255, 0.2) !important;
+  --el-input-text-color: $text-primary !important;
+  --el-input-placeholder-color: $text-muted !important;
+
+  .el-input__wrapper {
+    background: rgba(255, 255, 255, 0.05) !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: $border-radius-sm !important;
+
+    &.is-focus {
+      border-color: $primary-gold !important;
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+    }
+
+    &:hover {
+      border-color: $primary-gold !important;
+    }
+  }
+
+  .el-input__inner {
+    color: $text-primary !important;
+  }
+
+  .el-input__placeholder {
+    color: $text-muted !important;
+  }
+}
+
+.el-pagination {
+  --el-pagination-bg-color: transparent !important;
+  --el-pagination-hover-color: $primary-gold !important;
+  --el-pagination-text-color: $text-primary !important;
+
+  .el-pager li {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: $text-primary !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+    &.is-active {
+      background: $primary-gold !important;
+      color: $dark-bg !important;
+      border-color: $primary-gold !important;
+    }
+
+    &:hover:not(.is-active) {
+      color: $primary-gold !important;
+      border-color: $primary-gold !important;
+    }
+  }
+}
+
+.el-dialog {
+  background: $dark-bg-secondary !important;
+  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  border-radius: $border-radius-lg !important;
+  box-shadow: $shadow-lg !important;
+
+  .el-dialog__header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+    .el-dialog__title {
+      color: $primary-gold !important;
+      font-weight: 600;
+    }
+  }
+
+  .el-dialog__body {
+    color: $text-primary !important;
+  }
+
+  .el-dialog__headerbtn .el-dialog__close {
+    color: $text-secondary !important;
+
+    &:hover {
+      color: $primary-gold !important;
+    }
+  }
+}
+
+.el-form-item__label {
+  color: $text-primary !important;
+}
+
+.el-tag {
+  border-radius: $border-radius-sm !important;
+}
+
+.el-message-box {
+  background: $dark-bg-secondary !important;
+  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+
+  .el-message-box__title {
+    color: $primary-gold !important;
+  }
+
+  .el-message-box__message {
+    color: $text-primary !important;
+  }
+}
+
+.el-drawer {
+  background: $dark-bg-secondary !important;
+
+  .el-drawer__header {
+    color: $primary-gold !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+.el-descriptions {
+  --el-descriptions-text-color: $text-primary !important;
+  --el-descriptions-label-text-color: $text-secondary !important;
+  --el-descriptions-border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.status-tag {
+  padding: 4px 12px;
+  border-radius: $border-radius-sm;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.draft {
+    background: rgba(108, 117, 125, 0.2);
+    color: $text-secondary;
+  }
+
+  &.testing {
+    background: rgba(243, 156, 18, 0.2);
+    color: $warning;
+  }
+
+  &.approved {
+    background: rgba(39, 174, 96, 0.2);
+    color: $success;
+  }
+
+  &.completed {
+    background: rgba(39, 174, 96, 0.2);
+    color: $success;
+  }
+}

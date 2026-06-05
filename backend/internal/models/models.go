@@ -1,0 +1,222 @@
+package models
+
+import (
+	"time"
+)
+
+type Spirit struct {
+	ID                 uint      `gorm:"primaryKey" json:"id"`
+	Name               string    `gorm:"type:varchar(100);not null" json:"name"`
+	Category           string    `gorm:"type:varchar(50);not null" json:"category"`
+	Brand              string    `gorm:"type:varchar(100)" json:"brand"`
+	Origin             string    `gorm:"type:varchar(100)" json:"origin"`
+	AlcoholContent     float64   `gorm:"type:decimal(4,1)" json:"alcohol_content"`
+	VolumeMl           int       `gorm:"type:int;not null;default:700" json:"volume_ml"`
+	Unit               string    `gorm:"type:varchar(20);not null;default:'瓶'" json:"unit"`
+	StockQuantity      int       `gorm:"type:int;not null;default:0" json:"stock_quantity"`
+	MinStock           int       `gorm:"type:int;not null;default:5" json:"min_stock"`
+	CostPrice          float64   `gorm:"type:decimal(10,2);not null" json:"cost_price"`
+	SellingPricePerMl  float64   `gorm:"type:decimal(10,4)" json:"selling_price_per_ml"`
+	Description        string    `gorm:"type:text" json:"description"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+type Ingredient struct {
+	ID            uint      `gorm:"primaryKey" json:"id"`
+	Name          string    `gorm:"type:varchar(100);not null" json:"name"`
+	Category      string    `gorm:"type:varchar(50);not null" json:"category"`
+	Unit          string    `gorm:"type:varchar(20);not null" json:"unit"`
+	StockQuantity float64   `gorm:"type:decimal(10,2);not null;default:0" json:"stock_quantity"`
+	MinStock      float64   `gorm:"type:decimal(10,2);not null;default:0" json:"min_stock"`
+	CostPrice     float64   `gorm:"type:decimal(10,2);not null" json:"cost_price"`
+	Supplier      string    `gorm:"type:varchar(100)" json:"supplier"`
+	Description   string    `gorm:"type:text" json:"description"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type Recipe struct {
+	ID                 uint              `gorm:"primaryKey" json:"id"`
+	Name               string            `gorm:"type:varchar(100);not null" json:"name"`
+	Category           string            `gorm:"type:varchar(50);not null" json:"category"`
+	GlassType          string            `gorm:"type:varchar(50)" json:"glass_type"`
+	ServingMl          int               `gorm:"type:int" json:"serving_ml"`
+	Price              float64           `gorm:"type:decimal(10,2);not null" json:"price"`
+	Cost               float64           `gorm:"type:decimal(10,2)" json:"cost"`
+	PreparationMethod  string            `gorm:"type:text" json:"preparation_method"`
+	Garnish            string            `gorm:"type:varchar(200)" json:"garnish"`
+	TasteProfile       string            `gorm:"type:varchar(200)" json:"taste_profile"`
+	Difficulty         string            `gorm:"type:varchar(20)" json:"difficulty"`
+	IsSignature        bool              `gorm:"type:boolean;default:false" json:"is_signature"`
+	ImageUrl           string            `gorm:"type:varchar(500)" json:"image_url"`
+	Description        string            `gorm:"type:text" json:"description"`
+	RecipeIngredients  []RecipeIngredient `gorm:"foreignKey:RecipeID" json:"recipe_ingredients,omitempty"`
+	CreatedAt          time.Time         `json:"created_at"`
+	UpdatedAt          time.Time         `json:"updated_at"`
+}
+
+type RecipeIngredient struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	RecipeID       uint      `gorm:"type:bigint;not null;index" json:"recipe_id"`
+	IngredientType string    `gorm:"type:varchar(20);not null" json:"ingredient_type"`
+	IngredientID   uint      `gorm:"type:bigint;not null" json:"ingredient_id"`
+	Amount         float64   `gorm:"type:decimal(10,2);not null" json:"amount"`
+	Unit           string    `gorm:"type:varchar(20);not null" json:"unit"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type Order struct {
+	ID            uint         `gorm:"primaryKey" json:"id"`
+	OrderNo       string       `gorm:"type:varchar(50);not null;unique" json:"order_no"`
+	TableNo       string       `gorm:"type:varchar(20)" json:"table_no"`
+	CustomerCount int          `gorm:"type:int;default:1" json:"customer_count"`
+	TotalAmount   float64      `gorm:"type:decimal(10,2);not null" json:"total_amount"`
+	Discount      float64      `gorm:"type:decimal(10,2);default:0" json:"discount"`
+	ActualAmount  float64      `gorm:"type:decimal(10,2);not null" json:"actual_amount"`
+	PaymentMethod string       `gorm:"type:varchar(30)" json:"payment_method"`
+	Status        string       `gorm:"type:varchar(20);not null;default:'completed'" json:"status"`
+	Remark        string       `gorm:"type:text" json:"remark"`
+	OrderItems    []OrderItem  `gorm:"foreignKey:OrderID" json:"order_items,omitempty"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+}
+
+type OrderItem struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	OrderID    uint      `gorm:"type:bigint;not null;index" json:"order_id"`
+	RecipeID   uint      `gorm:"type:bigint;not null;index" json:"recipe_id"`
+	RecipeName string    `gorm:"type:varchar(100);not null" json:"recipe_name"`
+	Quantity   int       `gorm:"type:int;not null" json:"quantity"`
+	UnitPrice  float64   `gorm:"type:decimal(10,2);not null" json:"unit_price"`
+	Subtotal   float64   `gorm:"type:decimal(10,2);not null" json:"subtotal"`
+	Remark     string    `gorm:"type:text" json:"remark"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+type WasteRecord struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	IngredientType string    `gorm:"type:varchar(20);not null" json:"ingredient_type"`
+	IngredientID   uint      `gorm:"type:bigint;not null" json:"ingredient_id"`
+	IngredientName string    `gorm:"type:varchar(100);not null" json:"ingredient_name"`
+	Amount         float64   `gorm:"type:decimal(10,2);not null" json:"amount"`
+	Unit           string    `gorm:"type:varchar(20);not null" json:"unit"`
+	Reason         string    `gorm:"type:varchar(200);not null" json:"reason"`
+	Cost           float64   `gorm:"type:decimal(10,2);not null" json:"cost"`
+	Operator       string    `gorm:"type:varchar(50)" json:"operator"`
+	Remark         string    `gorm:"type:text" json:"remark"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type SpecialCreation struct {
+	ID                uint      `gorm:"primaryKey" json:"id"`
+	Name              string    `gorm:"type:varchar(100);not null" json:"name"`
+	Creator           string    `gorm:"type:varchar(50)" json:"creator"`
+	Inspiration       string    `gorm:"type:text" json:"inspiration"`
+	TasteProfile      string    `gorm:"type:varchar(200)" json:"taste_profile"`
+	GlassType         string    `gorm:"type:varchar(50)" json:"glass_type"`
+	ServingMl         int       `gorm:"type:int" json:"serving_ml"`
+	Price             float64   `gorm:"type:decimal(10,2)" json:"price"`
+	PreparationMethod string    `gorm:"type:text" json:"preparation_method"`
+	Garnish           string    `gorm:"type:varchar(200)" json:"garnish"`
+	IngredientsText   string    `gorm:"type:text" json:"ingredients_text"`
+	ImageUrl          string    `gorm:"type:varchar(500)" json:"image_url"`
+	Status            string    `gorm:"type:varchar(20);default:'draft'" json:"status"`
+	TastingNotes      string    `gorm:"type:text" json:"tasting_notes"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+type Purchase struct {
+	ID             uint            `gorm:"primaryKey" json:"id"`
+	PurchaseNo     string          `gorm:"type:varchar(50);not null;unique" json:"purchase_no"`
+	Supplier       string          `gorm:"type:varchar(100)" json:"supplier"`
+	TotalAmount    float64         `gorm:"type:decimal(10,2);not null" json:"total_amount"`
+	PurchaseDate   string          `gorm:"type:date;not null" json:"purchase_date"`
+	Operator       string          `gorm:"type:varchar(50)" json:"operator"`
+	Remark         string          `gorm:"type:text" json:"remark"`
+	PurchaseItems  []PurchaseItem  `gorm:"foreignKey:PurchaseID" json:"purchase_items,omitempty"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+}
+
+type PurchaseItem struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	PurchaseID     uint      `gorm:"type:bigint;not null;index" json:"purchase_id"`
+	IngredientType string    `gorm:"type:varchar(20);not null" json:"ingredient_type"`
+	IngredientID   uint      `gorm:"type:bigint;not null" json:"ingredient_id"`
+	IngredientName string    `gorm:"type:varchar(100);not null" json:"ingredient_name"`
+	Quantity       float64   `gorm:"type:decimal(10,2);not null" json:"quantity"`
+	Unit           string    `gorm:"type:varchar(20);not null" json:"unit"`
+	UnitPrice      float64   `gorm:"type:decimal(10,2);not null" json:"unit_price"`
+	Subtotal       float64   `gorm:"type:decimal(10,2);not null" json:"subtotal"`
+	BatchNo        string    `gorm:"type:varchar(100)" json:"batch_no"`
+	ExpiryDate     string    `gorm:"type:date" json:"expiry_date"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type BusinessSummary struct {
+	TotalRevenue    float64 `json:"total_revenue"`
+	TotalOrders     int64   `json:"total_orders"`
+	TotalCustomers  int64   `json:"total_customers"`
+	AverageOrder    float64 `json:"average_order"`
+	TopDrinks       []TopDrink `json:"top_drinks"`
+	DailyRevenue    []DailyRevenue `json:"daily_revenue"`
+	LowStockSpirits []Spirit `json:"low_stock_spirits"`
+	LowStockIngredients []Ingredient `json:"low_stock_ingredients"`
+	TotalWasteCost  float64 `json:"total_waste_cost"`
+}
+
+type TopDrink struct {
+	RecipeName string `json:"recipe_name"`
+	Quantity   int64  `json:"quantity"`
+	Revenue    float64 `json:"revenue"`
+}
+
+type DailyRevenue struct {
+	Date    string  `json:"date"`
+	Revenue float64 `json:"revenue"`
+	Orders  int64   `json:"orders"`
+}
+
+type OrderCreateRequest struct {
+	TableNo       string              `json:"table_no"`
+	CustomerCount int                 `json:"customer_count"`
+	Discount      float64             `json:"discount"`
+	PaymentMethod string              `json:"payment_method"`
+	Remark        string              `json:"remark"`
+	Items         []OrderItemCreate   `json:"items"`
+}
+
+type OrderItemCreate struct {
+	RecipeID uint   `json:"recipe_id"`
+	Quantity int    `json:"quantity"`
+	Remark   string `json:"remark"`
+}
+
+type PurchaseCreateRequest struct {
+	Supplier     string               `json:"supplier"`
+	PurchaseDate string               `json:"purchase_date"`
+	Operator     string               `json:"operator"`
+	Remark       string               `json:"remark"`
+	Items        []PurchaseItemCreate `json:"items"`
+}
+
+type PurchaseItemCreate struct {
+	IngredientType string  `json:"ingredient_type"`
+	IngredientID   uint    `json:"ingredient_id"`
+	Quantity       float64 `json:"quantity"`
+	Unit           string  `json:"unit"`
+	UnitPrice      float64 `json:"unit_price"`
+	BatchNo        string  `json:"batch_no"`
+	ExpiryDate     string  `json:"expiry_date"`
+}
+
+type WasteCreateRequest struct {
+	IngredientType string  `json:"ingredient_type"`
+	IngredientID   uint    `json:"ingredient_id"`
+	Amount         float64 `json:"amount"`
+	Reason         string  `json:"reason"`
+	Operator       string  `json:"operator"`
+	Remark         string  `json:"remark"`
+}
