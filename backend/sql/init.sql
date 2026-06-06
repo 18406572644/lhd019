@@ -429,3 +429,135 @@ INSERT INTO reconciliation_logs (order_no, payment_method, system_amount, actual
 ('ORD202401030001', '微信支付', 324.00, 324.00, 0.00, 'matched', '对账一致'),
 ('ORD202401030002', '支付宝', 836.00, 836.00, 0.00, 'matched', '对账一致'),
 ('ORD202401030003', '微信支付', 246.00, 246.00, 0.00, 'matched', '对账一致');
+
+DROP TABLE IF EXISTS stocktake_items;
+DROP TABLE IF EXISTS stocktakes;
+DROP TABLE IF EXISTS batch_out_records;
+DROP TABLE IF EXISTS stock_batches;
+
+CREATE TABLE stock_batches (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    batch_code VARCHAR(50) NOT NULL UNIQUE COMMENT '系统自动生成的批次编码',
+    batch_no VARCHAR(100) COMMENT '供应商提供的批号',
+    ingredient_type VARCHAR(20) NOT NULL COMMENT '原料类型: spirit/ingredient',
+    ingredient_id BIGINT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    purchase_item_id BIGINT COMMENT '关联采购明细ID',
+    total_quantity DECIMAL(10,2) NOT NULL COMMENT '总入库数量',
+    remaining_quantity DECIMAL(10,2) NOT NULL COMMENT '剩余库存数量',
+    unit VARCHAR(20) NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    expiry_date DATE COMMENT '保质期',
+    is_promotion BOOLEAN DEFAULT FALSE COMMENT '是否临期促销',
+    status VARCHAR(20) NOT NULL DEFAULT 'normal' COMMENT '批次状态: normal/expired/depleted',
+    warehouse_position VARCHAR(50) COMMENT '库位',
+    remark TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_batch_code (batch_code),
+    INDEX idx_ingredient (ingredient_type, ingredient_id),
+    INDEX idx_expiry_date (expiry_date),
+    INDEX idx_status (status),
+    INDEX idx_purchase_item (purchase_item_id),
+    FOREIGN KEY (purchase_item_id) REFERENCES purchase_items(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库存批次表';
+
+CREATE TABLE batch_out_records (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    batch_id BIGINT NOT NULL,
+    batch_code VARCHAR(50) NOT NULL,
+    ingredient_type VARCHAR(20) NOT NULL,
+    ingredient_id BIGINT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    out_type VARCHAR(20) NOT NULL COMMENT '出库类型: order/waste/manual',
+    out_quantity DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    total_cost DECIMAL(10,2) NOT NULL,
+    order_id BIGINT COMMENT '关联订单ID',
+    order_no VARCHAR(50) COMMENT '订单号',
+    waste_id BIGINT COMMENT '关联损耗记录ID',
+    operator VARCHAR(50),
+    remark TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_batch (batch_id),
+    INDEX idx_order (order_id),
+    INDEX idx_ingredient (ingredient_type, ingredient_id),
+    INDEX idx_created_at (created_at),
+    FOREIGN KEY (batch_id) REFERENCES stock_batches(id),
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
+    FOREIGN KEY (waste_id) REFERENCES waste_records(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='批次出库记录表';
+
+CREATE TABLE stocktakes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    stocktake_no VARCHAR(50) NOT NULL UNIQUE COMMENT '盘点单号',
+    stocktake_date DATE NOT NULL,
+    stocktake_type VARCHAR(20) NOT NULL DEFAULT 'periodic' COMMENT '盘点类型: periodic/monthly/yearly',
+    status VARCHAR(20) NOT NULL DEFAULT 'draft' COMMENT '状态: draft/confirmed',
+    operator VARCHAR(50),
+    total_profit DECIMAL(10,2) DEFAULT 0 COMMENT '盘盈总金额',
+    total_loss DECIMAL(10,2) DEFAULT 0 COMMENT '盘亏总金额',
+    total_diff DECIMAL(10,2) DEFAULT 0 COMMENT '差异总金额',
+    remark TEXT,
+    confirmed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_stocktake_no (stocktake_no),
+    INDEX idx_status (status),
+    INDEX idx_stocktake_date (stocktake_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库存盘点表';
+
+CREATE TABLE stocktake_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    stocktake_id BIGINT NOT NULL,
+    ingredient_type VARCHAR(20) NOT NULL,
+    ingredient_id BIGINT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    system_quantity DECIMAL(10,2) NOT NULL COMMENT '系统库存数量',
+    actual_quantity DECIMAL(10,2) NOT NULL COMMENT '实际盘点数量',
+    diff_quantity DECIMAL(10,2) NOT NULL COMMENT '差异数量',
+    unit VARCHAR(20) NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    diff_amount DECIMAL(10,2) NOT NULL COMMENT '差异金额',
+    diff_type VARCHAR(20) COMMENT 'profit/loss/normal',
+    remark TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_stocktake (stocktake_id),
+    INDEX idx_ingredient (ingredient_type, ingredient_id),
+    FOREIGN KEY (stocktake_id) REFERENCES stocktakes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库存盘点明细表';
+
+INSERT INTO stock_batches (batch_code, batch_no, ingredient_type, ingredient_id, ingredient_name, purchase_item_id, total_quantity, remaining_quantity, unit, unit_price, expiry_date, status) VALUES
+('BATCH-GIN-20240101-001', 'GIN20240101', 'spirit', 1, 'Tanqueray Gin', 1, 5.00, 5.00, '瓶', 280.00, '2026-01-01', 'normal'),
+('BATCH-WHISKY-20240101-001', 'WHISKY2024001', 'spirit', 5, 'Johnnie Walker Black', 2, 4.00, 4.00, '瓶', 320.00, '2027-01-01', 'normal'),
+('BATCH-RUM-20240101-001', 'RUM2024001', 'spirit', 7, 'Havana Club 7 Year', 3, 5.00, 5.00, '瓶', 180.00, '2026-06-01', 'normal'),
+('BATCH-TEQ-20240101-001', 'TEQ2024001', 'spirit', 10, 'Jose Cuervo Gold', 4, 6.00, 6.00, '瓶', 150.00, '2026-03-01', 'normal'),
+('BATCH-LIQ-20240101-001', 'LIQ2024001', 'spirit', 11, 'Cointreau', 5, 4.00, 4.00, '瓶', 210.00, '2026-12-01', 'normal'),
+('BATCH-VOD-20240101-001', 'VOD2024001', 'spirit', 3, 'Absolut Vodka', 6, 4.00, 4.00, '瓶', 120.00, '2026-09-01', 'normal'),
+('BATCH-LEMON-20240102-001', NULL, 'ingredient', 1, '新鲜柠檬', 7, 60.00, 60.00, '个', 3.50, '2024-01-10', 'normal'),
+('BATCH-LIME-20240102-001', NULL, 'ingredient', 2, '新鲜青柠', 8, 50.00, 50.00, '个', 4.00, '2024-01-10', 'normal'),
+('BATCH-MINT-20240102-001', NULL, 'ingredient', 20, '薄荷', 9, 80.00, 80.00, '枝', 0.50, '2024-01-08', 'normal'),
+('BATCH-EGG-20240102-001', NULL, 'ingredient', 13, '蛋清', 10, 30.00, 30.00, '个', 1.50, '2024-01-05', 'normal'),
+('BATCH-GRAPEFRUIT-20240102-001', 'JUICE2024001', 'ingredient', 3, '西柚汁', 11, 3000.00, 3000.00, 'ml', 0.08, '2024-01-15', 'normal'),
+('BATCH-ORANGE-20240102-001', 'JUICE2024002', 'ingredient', 4, '橙汁', 12, 3000.00, 3000.00, 'ml', 0.06, '2024-01-15', 'normal'),
+('BATCH-CRANBERRY-20240102-001', 'JUICE2024003', 'ingredient', 5, '蔓越莓汁', 13, 2000.00, 2000.00, 'ml', 0.10, '2024-01-20', 'normal'),
+('BATCH-PINEAPPLE-20240102-001', 'JUICE2024004', 'ingredient', 6, '菠萝汁', 14, 2000.00, 2000.00, 'ml', 0.07, '2024-01-20', 'normal'),
+('BATCH-GRENADINE-20240105-001', 'SYR2024001', 'ingredient', 7, '红石榴糖浆', 15, 1000.00, 1000.00, 'ml', 0.12, '2024-06-01', 'normal'),
+('BATCH-SYRUP-20240105-001', NULL, 'ingredient', 8, '单糖浆', 16, 2000.00, 2000.00, 'ml', 0.03, '2024-02-01', 'normal'),
+('BATCH-ANGOSTURA-20240105-001', 'BIT2024001', 'ingredient', 14, '安格斯特拉苦精', 17, 500.00, 500.00, 'ml', 0.40, '2026-01-01', 'normal'),
+('BATCH-ORANGEBIT-20240105-001', 'BIT2024002', 'ingredient', 15, '橙味苦精', 18, 500.00, 500.00, 'ml', 0.35, '2026-01-01', 'normal'),
+('BATCH-SODA-20240105-001', NULL, 'ingredient', 16, '苏打水', 19, 10000.00, 10000.00, 'ml', 0.01, '2024-03-01', 'normal'),
+('BATCH-TONIC-20240105-001', NULL, 'ingredient', 17, '汤力水', 20, 6000.00, 6000.00, 'ml', 0.02, '2024-03-01', 'normal'),
+('BATCH-GINGER-20240105-001', NULL, 'ingredient', 18, '干姜水', 21, 5000.00, 5000.00, 'ml', 0.02, '2024-03-01', 'normal'),
+('BATCH-COLA-20240105-001', NULL, 'ingredient', 19, '可乐', 22, 12000.00, 12000.00, 'ml', 0.01, '2024-03-01', 'normal'),
+('BATCH-MACALLAN-20240108-001', 'MAC2024001', 'spirit', 6, 'Macallan 12 Year', 23, 2.00, 2.00, '瓶', 680.00, '2030-01-01', 'normal'),
+('BATCH-PATRON-20240108-001', 'PAT2024001', 'spirit', 9, 'Patron Silver', 24, 2.00, 2.00, '瓶', 450.00, '2028-01-01', 'normal'),
+('BATCH-GOOSE-20240108-001', 'GOOSE2024001', 'spirit', 4, 'Grey Goose', 25, 2.00, 2.00, '瓶', 380.00, '2027-01-01', 'normal'),
+('BATCH-BAILEYS-20240108-001', 'BAI2024001', 'spirit', 12, 'Baileys Irish Cream', 26, 2.00, 2.00, '瓶', 180.00, '2024-12-01', 'normal');
+
+INSERT INTO stocktakes (stocktake_no, stocktake_date, stocktake_type, status, operator, total_profit, total_loss, total_diff, remark) VALUES
+('ST20240115001', '2024-01-15', 'monthly', 'confirmed', '库管小李', 0.00, 17.50, -17.50, '1月中旬月度盘点，柠檬5个腐烂');
+
+INSERT INTO stocktake_items (stocktake_id, ingredient_type, ingredient_id, ingredient_name, system_quantity, actual_quantity, diff_quantity, unit, unit_price, diff_amount, diff_type, remark) VALUES
+(1, 'ingredient', 1, '新鲜柠檬', 50.00, 45.00, -5.00, '个', 3.50, -17.50, 'loss', '5个腐烂变质，已报损');

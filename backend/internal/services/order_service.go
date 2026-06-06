@@ -84,6 +84,10 @@ func CreateOrder(req *models.OrderCreateRequest) (*models.Order, error) {
 
 		for _, ri := range recipe.RecipeIngredients {
 			totalDeduct := ri.Amount * float64(item.Quantity)
+			var deductQty float64
+			var ingredientName string
+			var unit string
+
 			if ri.IngredientType == "spirit" {
 				spirit, err := GetSpirit(ri.IngredientID)
 				if err != nil {
@@ -91,13 +95,15 @@ func CreateOrder(req *models.OrderCreateRequest) (*models.Order, error) {
 					return nil, errors.New("spirit not found")
 				}
 				mlPerBottle := float64(spirit.VolumeMl)
-				bottlesToDeduct := totalDeduct / mlPerBottle
-				if float64(spirit.StockQuantity) < bottlesToDeduct {
+				deductQty = totalDeduct / mlPerBottle
+				ingredientName = spirit.Name
+				unit = spirit.Unit
+				if float64(spirit.StockQuantity) < deductQty {
 					tx.Rollback()
-					return nil, fmt.Errorf("insufficient stock for spirit: %s, need %.2f bottles, have %d", spirit.Name, bottlesToDeduct, spirit.StockQuantity)
+					return nil, fmt.Errorf("库存不足: %s, 需要 %.2f %s, 现有 %d", spirit.Name, deductQty, spirit.Unit, spirit.StockQuantity)
 				}
 				if err := tx.Model(&models.Spirit{}).Where("id = ?", ri.IngredientID).
-					Update("stock_quantity", gorm.Expr("stock_quantity - ?", bottlesToDeduct)).Error; err != nil {
+					Update("stock_quantity", gorm.Expr("stock_quantity - ?", deductQty)).Error; err != nil {
 					tx.Rollback()
 					return nil, err
 				}
@@ -107,15 +113,32 @@ func CreateOrder(req *models.OrderCreateRequest) (*models.Order, error) {
 					tx.Rollback()
 					return nil, errors.New("ingredient not found")
 				}
-				if ingredient.StockQuantity < totalDeduct {
+				deductQty = totalDeduct
+				ingredientName = ingredient.Name
+				unit = ingredient.Unit
+				if ingredient.StockQuantity < deductQty {
 					tx.Rollback()
-					return nil, fmt.Errorf("insufficient stock for ingredient: %s, need %.2f %s, have %.2f", ingredient.Name, totalDeduct, ingredient.Unit, ingredient.StockQuantity)
+					return nil, fmt.Errorf("库存不足: %s, 需要 %.2f %s, 现有 %.2f", ingredient.Name, deductQty, ingredient.Unit, ingredient.StockQuantity)
 				}
 				if err := tx.Model(&models.Ingredient{}).Where("id = ?", ri.IngredientID).
-					Update("stock_quantity", gorm.Expr("stock_quantity - ?", totalDeduct)).Error; err != nil {
+					Update("stock_quantity", gorm.Expr("stock_quantity - ?", deductQty)).Error; err != nil {
 					tx.Rollback()
 					return nil, err
 				}
+			}
+
+			batchDeductReq := &models.BatchDeductRequest{
+				IngredientType: ri.IngredientType,
+				IngredientID:   ri.IngredientID,
+				Quantity:       deductQty,
+				OutType:        "order",
+				Operator:       req.Remark,
+				Remark:         fmt.Sprintf("订单配方: %s x %d, 配料: %s", recipe.Name, item.Quantity, ingredientName),
+			}
+			_, err = DeductStockFIFO(tx, batchDeductReq)
+			if err != nil {
+				tx.Rollback()
+				return nil, fmt.Errorf("批次扣减失败: %s", err.Error())
 			}
 		}
 	}
@@ -139,6 +162,16 @@ func CreateOrder(req *models.OrderCreateRequest) (*models.Order, error) {
 	}
 
 	if err := tx.Create(order).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Model(&models.BatchOutRecord{}).Where("order_id IS NULL AND out_type = 'order'").
+		Where("created_at >= ?", time.Now().Add(-5*time.Minute)).
+		Updates(map[string]interface{}{
+			"order_id": order.ID,
+			"order_no": order.OrderNo,
+		}).Error; err != nil {
 		tx.Rollback()
 		return nil, err
 	}

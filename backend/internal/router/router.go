@@ -92,5 +92,26 @@ func SetupRoutes(r *gin.Engine) {
 			finance.POST("/reconciliation-logs", handlers.CreateReconciliationLog)
 			finance.PUT("/reconciliation-logs/:id", handlers.UpdateReconciliationLog)
 		}
+
+		inventory := api.Group("/inventory")
+		{
+			inventory.GET("/batches", handlers.GetStockBatches)
+			inventory.GET("/batches/:id", handlers.GetStockBatch)
+			inventory.PUT("/batches/:id/promotion", handlers.UpdateStockBatchPromotion)
+			inventory.GET("/batches/trace/:batch_code", handlers.TraceBatch)
+			inventory.GET("/batch-out-records", handlers.GetBatchOutRecords)
+			inventory.GET("/expiry-warnings", handlers.GetExpiryWarnings)
+			inventory.POST("/update-expired", handlers.UpdateExpiredBatches)
+		}
+
+		stocktake := api.Group("/stocktake")
+		{
+			stocktake.GET("", handlers.GetStocktakes)
+			stocktake.GET("/:id", handlers.GetStocktake)
+			stocktake.POST("", handlers.CreateStocktake)
+			stocktake.PUT("/:id/confirm", handlers.ConfirmStocktake)
+			stocktake.DELETE("/:id", handlers.DeleteStocktake)
+			stocktake.GET("/generate-items", handlers.GenerateStocktakeItems)
+		}
 	}
 }

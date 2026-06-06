@@ -132,6 +132,7 @@ export interface PurchaseItem {
   subtotal: number
   batch_no: string
   expiry_date: string
+  stock_batch_code?: string
   created_at: string
 }
 
@@ -156,6 +157,7 @@ export interface PurchaseItemForm {
   unit_price: number
   batch_no: string
   expiry_date: string
+  generated_batch_code?: string
 }
 
 export interface PurchaseForm {
@@ -445,5 +447,145 @@ export const api = {
   createReconciliationLog: (data: Partial<ReconciliationLog>) =>
     request.post<ApiResponse<ReconciliationLog>>('/finance/reconciliation-logs', data),
   updateReconciliationLog: (id: number, data: { status: string; remark: string }) =>
-    request.put<ApiResponse<ReconciliationLog>>(`/finance/reconciliation-logs/${id}`, data)
+    request.put<ApiResponse<ReconciliationLog>>(`/finance/reconciliation-logs/${id}`, data),
+
+  getStockBatches: (params?: { ingredient_type?: string; ingredient_id?: number; status?: string; keyword?: string }) =>
+    request.get<ApiResponse<StockBatch[]>>('/inventory/batches', { params }),
+  getStockBatch: (id: number) =>
+    request.get<ApiResponse<StockBatch>>(`/inventory/batches/${id}`),
+  updateStockBatchPromotion: (id: number, data: { is_promotion: boolean; remark?: string }) =>
+    request.put<ApiResponse<StockBatch>>(`/inventory/batches/${id}/promotion`, data),
+  traceBatch: (batchCode: string) =>
+    request.get<ApiResponse<BatchTraceResult>>(`/inventory/batches/trace/${batchCode}`),
+  getBatchOutRecords: (params?: { batch_id?: number; order_id?: number; ingredient_type?: string; ingredient_id?: number }) =>
+    request.get<ApiResponse<BatchOutRecord[]>>('/inventory/batch-out-records', { params }),
+  getExpiryWarnings: (params?: { days?: number }) =>
+    request.get<ApiResponse<ExpiryWarningResult[]>>('/inventory/expiry-warnings', { params }),
+  updateExpiredBatches: () =>
+    request.post<ApiResponse<any>>('/inventory/update-expired'),
+
+  getStocktakes: (params?: { start_date?: string; end_date?: string; status?: string; stocktake_type?: string }) =>
+    request.get<ApiResponse<Stocktake[]>>('/stocktake', { params }),
+  getStocktake: (id: number) =>
+    request.get<ApiResponse<Stocktake>>(`/stocktake/${id}`),
+  createStocktake: (data: StocktakeCreateRequest) =>
+    request.post<ApiResponse<Stocktake>>('/stocktake', data),
+  confirmStocktake: (id: number, data: { status: string; remark?: string }) =>
+    request.put<ApiResponse<Stocktake>>(`/stocktake/${id}/confirm`, data),
+  deleteStocktake: (id: number) =>
+    request.delete<ApiResponse<void>>(`/stocktake/${id}`),
+  generateStocktakeItems: () =>
+    request.get<ApiResponse<any[]>>('/stocktake/generate-items')
+}
+
+export interface StockBatch {
+  id: number
+  batch_code: string
+  batch_no: string
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  ingredient_name: string
+  purchase_item_id?: number
+  total_quantity: number
+  remaining_quantity: number
+  unit: string
+  unit_price: number
+  expiry_date: string
+  is_promotion: boolean
+  status: 'normal' | 'expired' | 'depleted'
+  warehouse_position?: string
+  remark?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface BatchOutRecord {
+  id: number
+  batch_id: number
+  batch_code: string
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  ingredient_name: string
+  out_type: 'order' | 'waste' | 'manual'
+  out_quantity: number
+  unit: string
+  unit_price: number
+  total_cost: number
+  order_id?: number
+  order_no?: string
+  waste_id?: number
+  operator?: string
+  remark?: string
+  created_at: string
+}
+
+export interface ExpiryWarningResult {
+  stock_batch: StockBatch
+  days_to_expiry: number
+  warning_level: 'normal' | 'attention' | 'warning' | 'urgent' | 'expired'
+}
+
+export interface BatchTraceResult {
+  stock_batch: StockBatch
+  out_records: BatchOutRecord[]
+  total_out_qty: number
+}
+
+export interface StocktakeItem {
+  id?: number
+  stocktake_id?: number
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  ingredient_name: string
+  system_quantity: number
+  actual_quantity: number
+  diff_quantity: number
+  unit: string
+  unit_price: number
+  diff_amount: number
+  diff_type?: 'profit' | 'loss' | 'normal'
+  remark?: string
+  created_at?: string
+}
+
+export interface Stocktake {
+  id: number
+  stocktake_no: string
+  stocktake_date: string
+  stocktake_type: 'periodic' | 'monthly' | 'yearly'
+  status: 'draft' | 'confirmed'
+  operator?: string
+  total_profit: number
+  total_loss: number
+  total_diff: number
+  remark?: string
+  confirmed_at?: string
+  stocktake_items?: StocktakeItem[]
+  created_at: string
+  updated_at: string
+}
+
+export interface StocktakeItemCreate {
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  actual_quantity: number
+  remark?: string
+}
+
+export interface StocktakeCreateRequest {
+  stocktake_date: string
+  stocktake_type: string
+  operator?: string
+  remark?: string
+  items: StocktakeItemCreate[]
+}
+
+export interface StocktakeItemGenerate {
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  ingredient_name: string
+  system_quantity: number
+  unit: string
+  unit_price: number
+  category: string
 }

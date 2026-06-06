@@ -55,6 +55,24 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '采购台账', icon: 'ShoppingCart' }
       },
       {
+        path: 'inventory-batches',
+        name: 'InventoryBatches',
+        component: () => import('@/views/InventoryBatches.vue'),
+        meta: { title: '库存批次', icon: 'Box' }
+      },
+      {
+        path: 'batch-trace',
+        name: 'BatchTrace',
+        component: () => import('@/views/BatchTrace.vue'),
+        meta: { title: '批次追溯', icon: 'Search' }
+      },
+      {
+        path: 'stocktake',
+        name: 'Stocktake',
+        component: () => import('@/views/StockTake.vue'),
+        meta: { title: '库存盘点', icon: 'Document' }
+      },
+      {
         path: 'finance',
         name: 'Finance',
         redirect: '/finance/revenue',

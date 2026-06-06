@@ -56,7 +56,7 @@ func CreatePurchase(req *models.PurchaseCreateRequest) (*models.Purchase, error)
 	var totalAmount float64
 	var purchaseItems []models.PurchaseItem
 
-	for _, item := range req.Items {
+	for idx, item := range req.Items {
 		subtotal := item.Quantity * item.UnitPrice
 		totalAmount += subtotal
 
@@ -77,6 +77,11 @@ func CreatePurchase(req *models.PurchaseCreateRequest) (*models.Purchase, error)
 			ingredientName = ingredient.Name
 		}
 
+		if item.BatchNo == "" || item.ExpiryDate == "" {
+			tx.Rollback()
+			return nil, fmt.Errorf("采购明细第 %d 项：批次号和保质期为必填项", idx+1)
+		}
+
 		purchaseItem := models.PurchaseItem{
 			IngredientType: item.IngredientType,
 			IngredientID:   item.IngredientID,
@@ -85,8 +90,8 @@ func CreatePurchase(req *models.PurchaseCreateRequest) (*models.Purchase, error)
 			Unit:           item.Unit,
 			UnitPrice:      item.UnitPrice,
 			Subtotal:       subtotal,
-			BatchNo:       item.BatchNo,
-			ExpiryDate:    item.ExpiryDate,
+			BatchNo:        item.BatchNo,
+			ExpiryDate:     item.ExpiryDate,
 		}
 		purchaseItems = append(purchaseItems, purchaseItem)
 
@@ -106,12 +111,12 @@ func CreatePurchase(req *models.PurchaseCreateRequest) (*models.Purchase, error)
 	}
 
 	purchase := &models.Purchase{
-		PurchaseNo:   generatePurchaseNo(),
-		Supplier:     req.Supplier,
-		TotalAmount:  totalAmount,
-		PurchaseDate: req.PurchaseDate,
-		Operator:     req.Operator,
-		Remark:       req.Remark,
+		PurchaseNo:    generatePurchaseNo(),
+		Supplier:      req.Supplier,
+		TotalAmount:   totalAmount,
+		PurchaseDate:  req.PurchaseDate,
+		Operator:      req.Operator,
+		Remark:        req.Remark,
 		PurchaseItems: purchaseItems,
 	}
 
@@ -120,8 +125,52 @@ func CreatePurchase(req *models.PurchaseCreateRequest) (*models.Purchase, error)
 		return nil, err
 	}
 
+	for i, item := range purchase.PurchaseItems {
+		batchReq := &models.StockBatchCreateRequest{
+			IngredientType: item.IngredientType,
+			IngredientID:   item.IngredientID,
+			IngredientName: item.IngredientName,
+			BatchNo:        item.BatchNo,
+			TotalQuantity:  item.Quantity,
+			Unit:           item.Unit,
+			UnitPrice:      item.UnitPrice,
+			ExpiryDate:     item.ExpiryDate,
+			Remark:         fmt.Sprintf("采购单: %s", purchase.PurchaseNo),
+		}
+		purchaseItemID := purchase.PurchaseItems[i].ID
+		_, err := CreateStockBatchWithTx(tx, batchReq, &purchaseItemID)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
 	tx.Commit()
 	return GetPurchase(purchase.ID)
+}
+
+func CreateStockBatchWithTx(tx *gorm.DB, req *models.StockBatchCreateRequest, purchaseItemID *uint) (*models.StockBatch, error) {
+	batch := &models.StockBatch{
+		BatchCode:         generateBatchCode(req.IngredientType, req.IngredientName),
+		BatchNo:           req.BatchNo,
+		IngredientType:    req.IngredientType,
+		IngredientID:      req.IngredientID,
+		IngredientName:    req.IngredientName,
+		PurchaseItemID:    purchaseItemID,
+		TotalQuantity:     req.TotalQuantity,
+		RemainingQuantity: req.TotalQuantity,
+		Unit:              req.Unit,
+		UnitPrice:         req.UnitPrice,
+		ExpiryDate:        req.ExpiryDate,
+		Status:            "normal",
+		WarehousePosition: req.WarehousePosition,
+		Remark:            req.Remark,
+	}
+
+	if err := tx.Create(batch).Error; err != nil {
+		return nil, err
+	}
+	return batch, nil
 }
 
 func DeletePurchase(id uint) error {

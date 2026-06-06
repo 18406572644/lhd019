@@ -391,3 +391,142 @@ type OperatingCostCreateRequest struct {
 	IsFixed     bool    `json:"is_fixed"`
 	Description string  `json:"description"`
 }
+
+type StockBatch struct {
+	ID               uint      `gorm:"primaryKey" json:"id"`
+	BatchCode        string    `gorm:"type:varchar(50);not null;unique" json:"batch_code"`
+	BatchNo          string    `gorm:"type:varchar(100)" json:"batch_no"`
+	IngredientType   string    `gorm:"type:varchar(20);not null" json:"ingredient_type"`
+	IngredientID     uint      `gorm:"type:bigint;not null" json:"ingredient_id"`
+	IngredientName   string    `gorm:"type:varchar(100);not null" json:"ingredient_name"`
+	PurchaseItemID   *uint     `gorm:"type:bigint" json:"purchase_item_id"`
+	TotalQuantity    float64   `gorm:"type:decimal(10,2);not null" json:"total_quantity"`
+	RemainingQuantity float64  `gorm:"type:decimal(10,2);not null" json:"remaining_quantity"`
+	Unit             string    `gorm:"type:varchar(20);not null" json:"unit"`
+	UnitPrice        float64   `gorm:"type:decimal(10,2);not null" json:"unit_price"`
+	ExpiryDate       string    `gorm:"type:date" json:"expiry_date"`
+	IsPromotion      bool      `gorm:"type:boolean;default:false" json:"is_promotion"`
+	Status           string    `gorm:"type:varchar(20);not null;default:'normal'" json:"status"`
+	WarehousePosition string   `gorm:"type:varchar(50)" json:"warehouse_position"`
+	Remark           string    `gorm:"type:text" json:"remark"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type BatchOutRecord struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	BatchID        uint      `gorm:"type:bigint;not null;index" json:"batch_id"`
+	BatchCode      string    `gorm:"type:varchar(50);not null" json:"batch_code"`
+	IngredientType string    `gorm:"type:varchar(20);not null" json:"ingredient_type"`
+	IngredientID   uint      `gorm:"type:bigint;not null" json:"ingredient_id"`
+	IngredientName string    `gorm:"type:varchar(100);not null" json:"ingredient_name"`
+	OutType        string    `gorm:"type:varchar(20);not null" json:"out_type"`
+	OutQuantity    float64   `gorm:"type:decimal(10,2);not null" json:"out_quantity"`
+	Unit           string    `gorm:"type:varchar(20);not null" json:"unit"`
+	UnitPrice      float64   `gorm:"type:decimal(10,2);not null" json:"unit_price"`
+	TotalCost      float64   `gorm:"type:decimal(10,2);not null" json:"total_cost"`
+	OrderID        *uint     `gorm:"type:bigint;index" json:"order_id"`
+	OrderNo        string    `gorm:"type:varchar(50)" json:"order_no"`
+	WasteID        *uint     `gorm:"type:bigint;index" json:"waste_id"`
+	Operator       string    `gorm:"type:varchar(50)" json:"operator"`
+	Remark         string    `gorm:"type:text" json:"remark"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type Stocktake struct {
+	ID             uint           `gorm:"primaryKey" json:"id"`
+	StocktakeNo    string         `gorm:"type:varchar(50);not null;unique" json:"stocktake_no"`
+	StocktakeDate  string         `gorm:"type:date;not null" json:"stocktake_date"`
+	StocktakeType  string         `gorm:"type:varchar(20);not null;default:'periodic'" json:"stocktake_type"`
+	Status         string         `gorm:"type:varchar(20);not null;default:'draft'" json:"status"`
+	Operator       string         `gorm:"type:varchar(50)" json:"operator"`
+	TotalProfit    float64        `gorm:"type:decimal(10,2);default:0" json:"total_profit"`
+	TotalLoss      float64        `gorm:"type:decimal(10,2);default:0" json:"total_loss"`
+	TotalDiff      float64        `gorm:"type:decimal(10,2);default:0" json:"total_diff"`
+	Remark         string         `gorm:"type:text" json:"remark"`
+	ConfirmedAt    *time.Time     `json:"confirmed_at"`
+	StocktakeItems []StocktakeItem `gorm:"foreignKey:StocktakeID" json:"stocktake_items,omitempty"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+}
+
+type StocktakeItem struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	StocktakeID    uint      `gorm:"type:bigint;not null;index" json:"stocktake_id"`
+	IngredientType string    `gorm:"type:varchar(20);not null" json:"ingredient_type"`
+	IngredientID   uint      `gorm:"type:bigint;not null" json:"ingredient_id"`
+	IngredientName string    `gorm:"type:varchar(100);not null" json:"ingredient_name"`
+	SystemQuantity float64   `gorm:"type:decimal(10,2);not null" json:"system_quantity"`
+	ActualQuantity float64   `gorm:"type:decimal(10,2);not null" json:"actual_quantity"`
+	DiffQuantity   float64   `gorm:"type:decimal(10,2);not null" json:"diff_quantity"`
+	Unit           string    `gorm:"type:varchar(20);not null" json:"unit"`
+	UnitPrice      float64   `gorm:"type:decimal(10,2);not null" json:"unit_price"`
+	DiffAmount     float64   `gorm:"type:decimal(10,2);not null" json:"diff_amount"`
+	DiffType       string    `gorm:"type:varchar(20)" json:"diff_type"`
+	Remark         string    `gorm:"type:text" json:"remark"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type BatchDeductResult struct {
+	BatchID     uint    `json:"batch_id"`
+	BatchCode   string  `json:"batch_code"`
+	DeductQty   float64 `json:"deduct_qty"`
+	RemainingQty float64 `json:"remaining_qty"`
+	UnitPrice   float64 `json:"unit_price"`
+}
+
+type StockBatchCreateRequest struct {
+	IngredientType   string  `json:"ingredient_type"`
+	IngredientID     uint    `json:"ingredient_id"`
+	IngredientName   string  `json:"ingredient_name"`
+	BatchNo          string  `json:"batch_no"`
+	TotalQuantity    float64 `json:"total_quantity"`
+	Unit             string  `json:"unit"`
+	UnitPrice        float64 `json:"unit_price"`
+	ExpiryDate       string  `json:"expiry_date"`
+	WarehousePosition string `json:"warehouse_position"`
+	Remark           string  `json:"remark"`
+}
+
+type BatchDeductRequest struct {
+	IngredientType string  `json:"ingredient_type"`
+	IngredientID   uint    `json:"ingredient_id"`
+	Quantity       float64 `json:"quantity"`
+	OutType        string  `json:"out_type"`
+	OrderID        uint    `json:"order_id"`
+	OrderNo        string  `json:"order_no"`
+	Operator       string  `json:"operator"`
+	Remark         string  `json:"remark"`
+}
+
+type BatchTraceResult struct {
+	StockBatch  StockBatch      `json:"stock_batch"`
+	OutRecords  []BatchOutRecord `json:"out_records"`
+	TotalOutQty float64         `json:"total_out_qty"`
+}
+
+type StocktakeCreateRequest struct {
+	StocktakeDate string                  `json:"stocktake_date"`
+	StocktakeType string                  `json:"stocktake_type"`
+	Operator      string                  `json:"operator"`
+	Remark        string                  `json:"remark"`
+	Items         []StocktakeItemCreate   `json:"items"`
+}
+
+type StocktakeItemCreate struct {
+	IngredientType string  `json:"ingredient_type"`
+	IngredientID   uint    `json:"ingredient_id"`
+	ActualQuantity float64 `json:"actual_quantity"`
+	Remark         string  `json:"remark"`
+}
+
+type StocktakeConfirmRequest struct {
+	Status string `json:"status"`
+	Remark string `json:"remark"`
+}
+
+type ExpiryWarningResult struct {
+	StockBatch  StockBatch `json:"stock_batch"`
+	DaysToExpiry int       `json:"days_to_expiry"`
+	WarningLevel string    `json:"warning_level"`
+}

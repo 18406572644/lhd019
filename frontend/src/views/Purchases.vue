@@ -122,15 +122,21 @@
                     <span class="subtotal">¥{{ formatSafe(row.subtotal) }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="batch_no" label="批号" width="120" align="center">
+                <el-table-column prop="batch_no" label="供应商批号" width="130" align="center">
                   <template #default="{ row }">
                     <span v-if="row.batch_no" class="batch-no">{{ row.batch_no }}</span>
                     <span v-else class="text-muted">-</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="expiry_date" label="有效期" width="120" align="center">
+                <el-table-column prop="expiry_date" label="有效期" width="110" align="center">
                   <template #default="{ row }">
                     <span v-if="row.expiry_date" class="expiry-date">{{ row.expiry_date }}</span>
+                    <span v-else class="text-muted">-</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="stock_batch_code" label="系统批次码" width="160" align="center">
+                  <template #default="{ row }">
+                    <span v-if="row.stock_batch_code" class="batch-code">{{ row.stock_batch_code }}</span>
                     <span v-else class="text-muted">-</span>
                   </template>
                 </el-table-column>
@@ -344,21 +350,34 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="批号" width="130" align="center">
+            <el-table-column label="供应商批号" width="150" align="center">
               <template #default="{ row }">
-                <el-input v-model="row.batch_no" placeholder="可选" size="default" />
+                <el-input v-model="row.batch_no" placeholder="请输入批号" size="default" />
+                <div v-if="!row.batch_no" class="field-error">必填</div>
               </template>
             </el-table-column>
 
-            <el-table-column label="有效期" width="130" align="center">
+            <el-table-column label="保质期" width="150" align="center">
               <template #default="{ row }">
                 <el-date-picker
                   v-model="row.expiry_date"
                   type="date"
-                  placeholder="可选"
+                  placeholder="请选择日期"
                   value-format="YYYY-MM-DD"
                   size="default"
                   style="width: 100%"
+                />
+                <div v-if="!row.expiry_date" class="field-error">必填</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="系统批次码" width="160" align="center">
+              <template #default="{ row }">
+                <el-input
+                  v-model="row.generated_batch_code"
+                  placeholder="保存后自动生成"
+                  size="default"
+                  disabled
                 />
               </template>
             </el-table-column>
@@ -424,8 +443,8 @@ const mockPurchases: Purchase[] = [
     created_at: '2026-06-01T10:30:00Z',
     updated_at: '2026-06-01T10:30:00Z',
     purchase_items: [
-      { id: 1, purchase_id: 1, ingredient_type: 'spirit', ingredient_id: 1, ingredient_name: '麦卡伦12年', quantity: 6, unit: '瓶', unit_price: 3800, subtotal: 22800, batch_no: 'M20260501', expiry_date: '2030-12-31', created_at: '' },
-      { id: 2, purchase_id: 1, ingredient_type: 'spirit', ingredient_id: 3, ingredient_name: '灰雁伏特加', quantity: 12, unit: '瓶', unit_price: 475, subtotal: 5700, batch_no: 'G20260415', expiry_date: '2028-06-30', created_at: '' }
+      { id: 1, purchase_id: 1, ingredient_type: 'spirit', ingredient_id: 1, ingredient_name: '麦卡伦12年', quantity: 6, unit: '瓶', unit_price: 3800, subtotal: 22800, batch_no: 'M20260501', expiry_date: '2030-12-31', stock_batch_code: 'BATCH-SPIRIT-20260601-A1B2C3', created_at: '' },
+      { id: 2, purchase_id: 1, ingredient_type: 'spirit', ingredient_id: 3, ingredient_name: '灰雁伏特加', quantity: 12, unit: '瓶', unit_price: 475, subtotal: 5700, batch_no: 'G20260415', expiry_date: '2028-06-30', stock_batch_code: 'BATCH-SPIRIT-20260601-D4E5F6', created_at: '' }
     ]
   },
   {
@@ -439,10 +458,10 @@ const mockPurchases: Purchase[] = [
     created_at: '2026-06-03T14:20:00Z',
     updated_at: '2026-06-03T14:20:00Z',
     purchase_items: [
-      { id: 3, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 26, ingredient_name: '新鲜薄荷叶', quantity: 2000, unit: 'g', unit_price: 0.8, subtotal: 1600, batch_no: 'B20260603', expiry_date: '2026-06-10', created_at: '' },
-      { id: 4, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 27, ingredient_name: '青柠', quantity: 100, unit: '个', unit_price: 3.5, subtotal: 350, batch_no: 'Q20260602', expiry_date: '2026-06-15', created_at: '' },
-      { id: 5, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 16, ingredient_name: '安格斯特拉苦精', quantity: 12, unit: '瓶', unit_price: 180, subtotal: 2160, batch_no: 'A20260301', expiry_date: '2027-03-31', created_at: '' },
-      { id: 6, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 21, ingredient_name: '红石榴糖浆', quantity: 6, unit: '瓶', unit_price: 260, subtotal: 1560, batch_no: 'H20260215', expiry_date: '2027-02-28', created_at: '' }
+      { id: 3, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 26, ingredient_name: '新鲜薄荷叶', quantity: 2000, unit: 'g', unit_price: 0.8, subtotal: 1600, batch_no: 'B20260603', expiry_date: '2026-06-10', stock_batch_code: 'BATCH-INGREDIENT-20260603-G7H8I9', created_at: '' },
+      { id: 4, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 27, ingredient_name: '青柠', quantity: 100, unit: '个', unit_price: 3.5, subtotal: 350, batch_no: 'Q20260602', expiry_date: '2026-06-15', stock_batch_code: 'BATCH-INGREDIENT-20260603-J0K1L2', created_at: '' },
+      { id: 5, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 16, ingredient_name: '安格斯特拉苦精', quantity: 12, unit: '瓶', unit_price: 180, subtotal: 2160, batch_no: 'A20260301', expiry_date: '2027-03-31', stock_batch_code: 'BATCH-INGREDIENT-20260603-M3N4O5', created_at: '' },
+      { id: 6, purchase_id: 2, ingredient_type: 'ingredient', ingredient_id: 21, ingredient_name: '红石榴糖浆', quantity: 6, unit: '瓶', unit_price: 260, subtotal: 1560, batch_no: 'H20260215', expiry_date: '2027-02-28', stock_batch_code: 'BATCH-INGREDIENT-20260603-P6Q7R8', created_at: '' }
     ]
   },
   {
@@ -456,11 +475,11 @@ const mockPurchases: Purchase[] = [
     created_at: '2026-06-05T09:15:00Z',
     updated_at: '2026-06-05T09:15:00Z',
     purchase_items: [
-      { id: 7, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 2, ingredient_name: '尊尼获加黑牌', quantity: 12, unit: '瓶', unit_price: 580, subtotal: 6960, batch_no: 'J20260420', expiry_date: '2029-08-15', created_at: '' },
-      { id: 8, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 5, ingredient_name: '百加得白朗姆8年', quantity: 6, unit: '瓶', unit_price: 720, subtotal: 4320, batch_no: 'B20260310', expiry_date: '2028-11-20', created_at: '' },
-      { id: 9, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 12, ingredient_name: '轩尼诗VSOP', quantity: 6, unit: '瓶', unit_price: 1680, subtotal: 10080, batch_no: 'H20260105', expiry_date: '2030-01-10', created_at: '' },
-      { id: 10, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 7, ingredient_name: '培恩银龙舌兰', quantity: 12, unit: '瓶', unit_price: 420, subtotal: 5040, batch_no: 'P20260228', expiry_date: '2027-12-31', created_at: '' },
-      { id: 11, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 15, ingredient_name: '添加利十号金酒', quantity: 12, unit: '瓶', unit_price: 380, subtotal: 4560, batch_no: 'T20260315', expiry_date: '2028-05-20', created_at: '' }
+      { id: 7, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 2, ingredient_name: '尊尼获加黑牌', quantity: 12, unit: '瓶', unit_price: 580, subtotal: 6960, batch_no: 'J20260420', expiry_date: '2029-08-15', stock_batch_code: 'BATCH-SPIRIT-20260605-S9T0U1', created_at: '' },
+      { id: 8, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 5, ingredient_name: '百加得白朗姆8年', quantity: 6, unit: '瓶', unit_price: 720, subtotal: 4320, batch_no: 'B20260310', expiry_date: '2028-11-20', stock_batch_code: 'BATCH-SPIRIT-20260605-V2W3X4', created_at: '' },
+      { id: 9, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 12, ingredient_name: '轩尼诗VSOP', quantity: 6, unit: '瓶', unit_price: 1680, subtotal: 10080, batch_no: 'H20260105', expiry_date: '2030-01-10', stock_batch_code: 'BATCH-SPIRIT-20260605-Y5Z6A7', created_at: '' },
+      { id: 10, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 7, ingredient_name: '培恩银龙舌兰', quantity: 12, unit: '瓶', unit_price: 420, subtotal: 5040, batch_no: 'P20260228', expiry_date: '2027-12-31', stock_batch_code: 'BATCH-SPIRIT-20260605-B8C9D0', created_at: '' },
+      { id: 11, purchase_id: 3, ingredient_type: 'spirit', ingredient_id: 15, ingredient_name: '添加利十号金酒', quantity: 12, unit: '瓶', unit_price: 380, subtotal: 4560, batch_no: 'T20260315', expiry_date: '2028-05-20', stock_batch_code: 'BATCH-SPIRIT-20260605-E1F2G3', created_at: '' }
     ]
   }
 ]
@@ -490,7 +509,8 @@ const purchaseForm = ref<PurchaseFormType>({
     unit: '瓶',
     unit_price: 0,
     batch_no: '',
-    expiry_date: ''
+    expiry_date: '',
+    generated_batch_code: ''
   }]
 })
 
@@ -674,7 +694,8 @@ const resetForm = () => {
       unit: '瓶',
       unit_price: 0,
       batch_no: '',
-      expiry_date: ''
+      expiry_date: '',
+      generated_batch_code: ''
     }]
   }
   purchaseFormRef.value?.resetFields()
@@ -688,7 +709,8 @@ const addPurchaseItem = () => {
     unit: '瓶',
     unit_price: 0,
     batch_no: '',
-    expiry_date: ''
+    expiry_date: '',
+    generated_batch_code: ''
   })
 }
 
@@ -737,6 +759,21 @@ const validateItems = (): boolean => {
     }
     if (!item.unit) {
       ElMessage.error(`请选择第 ${i + 1} 项单位`)
+      return false
+    }
+    if (!item.batch_no || item.batch_no.trim() === '') {
+      ElMessage.error(`第 ${i + 1} 项供应商批号为必填项`)
+      return false
+    }
+    if (!item.expiry_date) {
+      ElMessage.error(`第 ${i + 1} 项保质期为必填项`)
+      return false
+    }
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const expiry = new Date(item.expiry_date)
+    if (expiry < today) {
+      ElMessage.error(`第 ${i + 1} 项保质期不能早于今天`)
       return false
     }
   }
@@ -958,8 +995,21 @@ onMounted(() => {
   color: $text-secondary;
 }
 
+.batch-code {
+  font-family: 'Consolas', monospace;
+  color: $primary-gold;
+  font-weight: 600;
+}
+
 .expiry-date {
   color: $text-secondary;
+}
+
+.field-error {
+  color: #e74c3c;
+  font-size: 11px;
+  margin-top: 4px;
+  text-align: left;
 }
 
 .remark {

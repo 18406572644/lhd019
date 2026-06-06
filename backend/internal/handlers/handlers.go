@@ -608,3 +608,158 @@ func UpdateReconciliationLog(c *gin.Context) {
 	}
 	successResponse(c, log)
 }
+
+func GetStockBatches(c *gin.Context) {
+	ingredientType := c.Query("ingredient_type")
+	ingredientID, _ := strconv.Atoi(c.Query("ingredient_id"))
+	status := c.Query("status")
+	keyword := c.Query("keyword")
+	batches, total, err := services.GetStockBatches(ingredientType, uint(ingredientID), status, keyword)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, batches, total)
+}
+
+func GetStockBatch(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	batch, err := services.GetStockBatch(uint(id))
+	if err != nil {
+		errorResponse(c, 404, "Stock batch not found")
+		return
+	}
+	successResponse(c, batch)
+}
+
+func UpdateStockBatchPromotion(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var req struct {
+		IsPromotion bool   `json:"is_promotion"`
+		Remark      string `json:"remark"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	batch, err := services.UpdateStockBatchPromotion(uint(id), req.IsPromotion, req.Remark)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, batch)
+}
+
+func GetBatchOutRecords(c *gin.Context) {
+	batchID, _ := strconv.Atoi(c.Query("batch_id"))
+	orderID, _ := strconv.Atoi(c.Query("order_id"))
+	ingredientType := c.Query("ingredient_type")
+	ingredientID, _ := strconv.Atoi(c.Query("ingredient_id"))
+	records, total, err := services.GetBatchOutRecords(uint(batchID), uint(orderID), ingredientType, uint(ingredientID))
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, records, total)
+}
+
+func GetExpiryWarnings(c *gin.Context) {
+	days, _ := strconv.Atoi(c.Query("days"))
+	if days <= 0 {
+		days = 30
+	}
+	warnings, err := services.GetExpiryWarnings(days)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, warnings, int64(len(warnings)))
+}
+
+func TraceBatch(c *gin.Context) {
+	batchCode := c.Param("batch_code")
+	result, err := services.TraceBatch(batchCode)
+	if err != nil {
+		errorResponse(c, 404, err.Error())
+		return
+	}
+	successResponse(c, result)
+}
+
+func GetStocktakes(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	status := c.Query("status")
+	stocktakeType := c.Query("stocktake_type")
+	stocktakes, total, err := services.GetStocktakes(startDate, endDate, status, stocktakeType)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, stocktakes, total)
+}
+
+func GetStocktake(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	stocktake, err := services.GetStocktake(uint(id))
+	if err != nil {
+		errorResponse(c, 404, "Stocktake not found")
+		return
+	}
+	successResponse(c, stocktake)
+}
+
+func CreateStocktake(c *gin.Context) {
+	var req models.StocktakeCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	stocktake, err := services.CreateStocktake(&req)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, stocktake)
+}
+
+func ConfirmStocktake(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var req models.StocktakeConfirmRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	stocktake, err := services.ConfirmStocktake(uint(id), &req)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, stocktake)
+}
+
+func DeleteStocktake(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err := services.DeleteStocktake(uint(id)); err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, nil)
+}
+
+func GenerateStocktakeItems(c *gin.Context) {
+	items, err := services.GenerateStocktakeItems()
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, items, int64(len(items)))
+}
+
+func UpdateExpiredBatches(c *gin.Context) {
+	if err := services.UpdateExpiredBatches(); err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, map[string]string{"status": "updated"})
+}
