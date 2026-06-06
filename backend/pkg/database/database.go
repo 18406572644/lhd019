@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cocktail-bar-system/internal/config"
+	"cocktail-bar-system/internal/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -33,6 +34,26 @@ func InitDB() {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
+	err = DB.AutoMigrate(
+		&models.Spirit{},
+		&models.Ingredient{},
+		&models.Recipe{},
+		&models.RecipeIngredient{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.WasteRecord{},
+		&models.SpecialCreation{},
+		&models.Purchase{},
+		&models.PurchaseItem{},
+		&models.OperatingCost{},
+		&models.ReconciliationLog{},
+		&models.CustomReportConfig{},
+	)
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	log.Println("Database migration completed successfully")
 	log.Println("Database connection established successfully")
 }
 

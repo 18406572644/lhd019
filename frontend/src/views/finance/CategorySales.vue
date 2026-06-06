@@ -238,7 +238,10 @@ const fetchData = async () => {
       category: currentFilter.category
     }
     const res = await api.getCategorySalesReport(params)
-    report.value = res.data?.data || res.data || generateMockCategorySalesReport(currentFilter.period)
+    const apiData = res.data?.data ?? res.data
+    report.value = apiData && typeof apiData === 'object' && 'category_sales' in apiData
+      ? apiData
+      : generateMockCategorySalesReport(currentFilter.period)
     await nextTick()
     renderCategoryChart()
     renderTimeSlotChart()

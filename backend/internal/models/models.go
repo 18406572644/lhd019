@@ -234,18 +234,26 @@ type OperatingCost struct {
 }
 
 type RevenueReport struct {
-	Period           string  `json:"period"`
-	StartDate        string  `json:"start_date"`
-	EndDate          string  `json:"end_date"`
-	TotalRevenue     float64 `json:"total_revenue"`
-	TotalOrders      int64   `json:"total_orders"`
-	TotalCustomers   int64   `json:"total_customers"`
-	AverageOrder     float64 `json:"average_order"`
-	AverageCustomer  float64 `json:"average_customer"`
-	YoYGrowth        float64 `json:"yoy_growth"`
-	QoQGrowth        float64 `json:"qoq_growth"`
-	YoYPrevious      float64 `json:"yoy_previous"`
-	QoQPrevious      float64 `json:"qoq_previous"`
+	Period           string             `json:"period"`
+	StartDate        string             `json:"start_date"`
+	EndDate          string             `json:"end_date"`
+	TotalRevenue     float64            `json:"total_revenue"`
+	TotalOrders      int64              `json:"total_orders"`
+	TotalCustomers   int64              `json:"total_customers"`
+	AverageOrder     float64            `json:"average_order"`
+	AverageCustomer  float64            `json:"average_customer"`
+	YoYGrowth        float64            `json:"yoy_growth"`
+	QoQGrowth        float64            `json:"qoq_growth"`
+	YoYPrevious      float64            `json:"yoy_previous"`
+	QoQPrevious      float64            `json:"qoq_previous"`
+	DailyData        []DailyRevenueData `json:"daily_data"`
+}
+
+type DailyRevenueData struct {
+	Date      string  `json:"date"`
+	Revenue   float64 `json:"revenue"`
+	Orders    int64   `json:"orders"`
+	Customers int64   `json:"customers"`
 }
 
 type CostAnalysisReport struct {

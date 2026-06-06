@@ -277,8 +277,15 @@ const fetchData = async () => {
       api.getProfitReport(params),
       api.getOperatingCosts()
     ])
-    report.value = reportRes.data?.data || reportRes.data || generateMockProfitReport(currentFilter.period)
-    operatingCosts.value = costsRes.data?.data || costsRes.data || generateMockOperatingCosts()
+    const reportData = reportRes.data?.data ?? reportRes.data
+    report.value = reportData && typeof reportData === 'object' && 'total_revenue' in reportData
+      ? reportData
+      : generateMockProfitReport(currentFilter.period)
+    
+    const costsData = costsRes.data?.data ?? costsRes.data
+    operatingCosts.value = Array.isArray(costsData)
+      ? costsData
+      : generateMockOperatingCosts()
     await nextTick()
     renderChart()
   } catch (error) {

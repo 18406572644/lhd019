@@ -142,7 +142,10 @@ const fetchData = async () => {
       end_date: currentFilter.end_date
     }
     const res = await api.getRevenueReport(params)
-    report.value = res.data?.data || res.data || generateMockRevenueReport(currentFilter.period)
+    const apiData = res.data?.data ?? res.data
+    report.value = apiData && typeof apiData === 'object' && 'total_revenue' in apiData
+      ? apiData
+      : generateMockRevenueReport(currentFilter.period)
     await nextTick()
     renderChart()
   } catch (error) {

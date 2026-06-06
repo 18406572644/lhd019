@@ -96,6 +96,28 @@ func GetRevenueReport(params models.FinanceFilterParams) (*models.RevenueReport,
 		qoqRevenue := getTotalRevenueForPeriod(qoqStart, qoqEnd)
 		report.QoQPrevious = qoqRevenue
 		report.QoQGrowth = calculateGrowthRate(totalRevenue, qoqRevenue)
+
+		type dailyResult struct {
+			Date      string
+			Revenue   float64
+			Orders    int64
+			Customers int64
+		}
+		var dailyResults []dailyResult
+
+		dailyQuery := database.DB.Model(&models.Order{}).
+			Select("DATE(created_at) as date, COALESCE(SUM(actual_amount), 0) as revenue, COUNT(*) as orders, COALESCE(SUM(customer_count), 0) as customers")
+		dailyQuery = applyDateFilter(dailyQuery, params)
+		dailyQuery.Group("DATE(created_at)").Order("date ASC").Scan(&dailyResults)
+
+		for _, dr := range dailyResults {
+			report.DailyData = append(report.DailyData, models.DailyRevenueData{
+				Date:      dr.Date,
+				Revenue:   dr.Revenue,
+				Orders:    dr.Orders,
+				Customers: dr.Customers,
+			})
+		}
 	}
 
 	return report, nil

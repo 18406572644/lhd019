@@ -289,8 +289,15 @@ const fetchData = async () => {
       api.getPaymentReconciliation(params),
       api.getReconciliationLogs(params)
     ])
-    report.value = reportRes.data?.data || reportRes.data || generateMockPaymentReconciliation(currentFilter.period)
-    reconciliationLogs.value = logsRes.data?.data || logsRes.data || report.value.reconciliation_logs || []
+    const reportData = reportRes.data?.data ?? reportRes.data
+    report.value = reportData && typeof reportData === 'object' && 'payment_methods' in reportData
+      ? reportData
+      : generateMockPaymentReconciliation(currentFilter.period)
+    
+    const logsData = logsRes.data?.data ?? logsRes.data
+    reconciliationLogs.value = Array.isArray(logsData)
+      ? logsData
+      : report.value.reconciliation_logs || []
   } catch (error) {
     report.value = generateMockPaymentReconciliation(currentFilter.period)
     reconciliationLogs.value = report.value.reconciliation_logs || []
