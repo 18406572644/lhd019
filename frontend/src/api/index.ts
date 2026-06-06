@@ -475,7 +475,52 @@ export const api = {
   deleteStocktake: (id: number) =>
     request.delete<ApiResponse<void>>(`/stocktake/${id}`),
   generateStocktakeItems: () =>
-    request.get<ApiResponse<any[]>>('/stocktake/generate-items')
+    request.get<ApiResponse<any[]>>('/stocktake/generate-items'),
+
+  getSuppliers: (params?: { keyword?: string; evaluation?: string }) =>
+    request.get<ApiResponse<Supplier[]>>('/suppliers', { params }),
+  getSupplier: (id: number) =>
+    request.get<ApiResponse<Supplier>>(`/suppliers/${id}`),
+  createSupplier: (data: Partial<Supplier>) =>
+    request.post<ApiResponse<Supplier>>('/suppliers', data),
+  updateSupplier: (id: number, data: Partial<Supplier>) =>
+    request.put<ApiResponse<Supplier>>(`/suppliers/${id}`, data),
+  deleteSupplier: (id: number) =>
+    request.delete<ApiResponse<void>>(`/suppliers/${id}`),
+
+  getSupplierQuotes: (params?: { ingredient_id?: number; supplier_id?: number }) =>
+    request.get<ApiResponse<SupplierQuote[]>>('/supplier-quotes', { params }),
+  createSupplierQuote: (data: Partial<SupplierQuote>) =>
+    request.post<ApiResponse<SupplierQuote>>('/supplier-quotes', data),
+  deleteSupplierQuote: (id: number) =>
+    request.delete<ApiResponse<void>>(`/supplier-quotes/${id}`),
+
+  getSupplierEvaluations: (params?: { supplier_id?: number; period?: string }) =>
+    request.get<ApiResponse<SupplierEvaluation[]>>('/supplier-evaluations', { params }),
+  createSupplierEvaluation: (data: Partial<SupplierEvaluation>) =>
+    request.post<ApiResponse<SupplierEvaluation>>('/supplier-evaluations', data),
+
+  getPurchaseForecast: (params?: { days?: number }) =>
+    request.get<ApiResponse<PurchaseForecastItem[]>>('/purchases/forecast', { params }),
+  getPurchaseSuggestions: () =>
+    request.get<ApiResponse<PurchaseSuggestion[]>>('/purchases/suggestions'),
+  createPurchaseSuggestion: (data: Partial<PurchaseSuggestion>) =>
+    request.post<ApiResponse<PurchaseSuggestion>>('/purchases/suggestions', data),
+  confirmPurchaseSuggestion: (id: number) =>
+    request.post<ApiResponse<Purchase>>(`/purchases/suggestions/${id}/confirm`),
+
+  updatePurchaseStatus: (id: number, data: { status: PurchaseStatus; remark?: string; operator?: string }) =>
+    request.put<ApiResponse<PurchaseWithStatus>>(`/purchases/${id}/status`, data),
+
+  getPurchaseTrend: (params?: { start_date?: string; end_date?: string }) =>
+    request.get<ApiResponse<SupplierPurchaseData[]>>('/purchases/analysis/trend', { params }),
+  getSupplierRatio: (params?: { start_date?: string; end_date?: string }) =>
+    request.get<ApiResponse<{ name: string; value: number; percentage: number }[]>>('/purchases/analysis/supplier-ratio', { params }),
+  getPriceTrend: (params?: { ingredient_id?: number; days?: number }) =>
+    request.get<ApiResponse<PriceTrendItem[]>>('/purchases/analysis/price-trend', { params }),
+
+  compareSupplierPrices: (ingredient_type: 'spirit' | 'ingredient', ingredient_id: number) =>
+    request.get<ApiResponse<SupplierQuote[]>>(`/purchases/price-comparison/${ingredient_type}/${ingredient_id}`)
 }
 
 export interface StockBatch {
@@ -588,4 +633,124 @@ export interface StocktakeItemGenerate {
   unit: string
   unit_price: number
   category: string
+}
+
+export interface Supplier {
+  id: number
+  name: string
+  contact_person: string
+  phone: string
+  address: string
+  email: string
+  account_period: number
+  rating: number
+  evaluation: 'A' | 'B' | 'C' | 'D'
+  min_order_amount: number
+  delivery_days: number
+  remark: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SupplierQuote {
+  id: number
+  supplier_id: number
+  supplier_name: string
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  ingredient_name: string
+  unit_price: number
+  unit: string
+  min_order_qty: number
+  valid_from: string
+  valid_to: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface SupplierEvaluation {
+  id: number
+  supplier_id: number
+  period: string
+  on_time_delivery_rate: number
+  price_stability_score: number
+  quality_score: number
+  overall_score: number
+  total_orders: number
+  delayed_orders: number
+  complaint_count: number
+  remark: string
+  created_at: string
+}
+
+export type PurchaseStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'ordered' | 'received' | 'reconciled' | 'paid'
+
+export interface PurchaseWithStatus extends Purchase {
+  status: PurchaseStatus
+  approval_by?: string
+  approval_at?: string
+  approval_remark?: string
+  received_at?: string
+  received_by?: string
+  reconciled_at?: string
+  paid_at?: string
+  paid_amount?: number
+}
+
+export interface PurchaseForecastItem {
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  ingredient_name: string
+  current_stock: number
+  safe_stock: number
+  forecast_demand: number
+  sales_forecast: number
+  expiry_quantity: number
+  suggested_quantity: number
+  economic_order_qty: number
+  min_order_qty: number
+  unit: string
+  unit_price: number
+  expiry_date?: string
+  days_to_expiry?: number
+  suggested_supplier_id?: number
+  suggested_supplier_name?: string
+  priority: 'high' | 'medium' | 'low'
+}
+
+export interface PurchaseSuggestion {
+  id?: number
+  suggestion_no: string
+  forecast_items: PurchaseForecastItem[]
+  total_amount: number
+  status: 'pending' | 'confirmed' | 'rejected'
+  created_at: string
+  created_by: string
+}
+
+export interface PriceTrendItem {
+  date: string
+  ingredient_id: number
+  ingredient_name: string
+  avg_price: number
+  supplier_id: number
+  supplier_name: string
+}
+
+export interface SupplierPurchaseData {
+  date: string
+  amount: number
+}
+
+export interface PurchaseAnalysis {
+  id: number
+  ingredient_type: 'spirit' | 'ingredient'
+  ingredient_id: number
+  ingredient_name: string
+  quantity: number
+  unit: string
+  unit_price: number
+  supplier_id: number
+  supplier_name: string
+  purchase_date: string
 }
