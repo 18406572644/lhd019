@@ -83,7 +83,10 @@ import {
   TrendCharts,
   PieChart,
   Histogram,
-  CreditCard
+  CreditCard,
+  Box,
+  Search,
+  Document
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -104,7 +107,10 @@ const menuItems = [
   { path: '/orders', title: '客单记录', icon: Tickets },
   { path: '/waste', title: '原料损耗', icon: Delete },
   { path: '/specials', title: '特调新品', icon: Star },
-  { path: '/purchases', title: '采购台账', icon: ShoppingCart }
+  { path: '/purchases', title: '采购台账', icon: ShoppingCart },
+  { path: '/inventory-batches', title: '库存批次', icon: Box },
+  { path: '/batch-trace', title: '批次追溯', icon: Search },
+  { path: '/stocktake', title: '库存盘点', icon: Document }
 ]
 
 interface MenuItem {

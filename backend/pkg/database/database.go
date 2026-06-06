@@ -48,6 +48,10 @@ func InitDB() {
 		&models.OperatingCost{},
 		&models.ReconciliationLog{},
 		&models.CustomReportConfig{},
+		&models.StockBatch{},
+		&models.BatchOutRecord{},
+		&models.Stocktake{},
+		&models.StocktakeItem{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)

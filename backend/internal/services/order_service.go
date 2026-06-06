@@ -86,7 +86,6 @@ func CreateOrder(req *models.OrderCreateRequest) (*models.Order, error) {
 			totalDeduct := ri.Amount * float64(item.Quantity)
 			var deductQty float64
 			var ingredientName string
-			var unit string
 
 			if ri.IngredientType == "spirit" {
 				spirit, err := GetSpirit(ri.IngredientID)
@@ -97,7 +96,6 @@ func CreateOrder(req *models.OrderCreateRequest) (*models.Order, error) {
 				mlPerBottle := float64(spirit.VolumeMl)
 				deductQty = totalDeduct / mlPerBottle
 				ingredientName = spirit.Name
-				unit = spirit.Unit
 				if float64(spirit.StockQuantity) < deductQty {
 					tx.Rollback()
 					return nil, fmt.Errorf("库存不足: %s, 需要 %.2f %s, 现有 %d", spirit.Name, deductQty, spirit.Unit, spirit.StockQuantity)
@@ -115,7 +113,6 @@ func CreateOrder(req *models.OrderCreateRequest) (*models.Order, error) {
 				}
 				deductQty = totalDeduct
 				ingredientName = ingredient.Name
-				unit = ingredient.Unit
 				if ingredient.StockQuantity < deductQty {
 					tx.Rollback()
 					return nil, fmt.Errorf("库存不足: %s, 需要 %.2f %s, 现有 %.2f", ingredient.Name, deductQty, ingredient.Unit, ingredient.StockQuantity)

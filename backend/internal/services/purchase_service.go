@@ -125,7 +125,13 @@ func CreatePurchase(req *models.PurchaseCreateRequest) (*models.Purchase, error)
 		return nil, err
 	}
 
-	for i, item := range purchase.PurchaseItems {
+	var savedItems []models.PurchaseItem
+	if err := tx.Where("purchase_id = ?", purchase.ID).Find(&savedItems).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	for _, item := range savedItems {
 		batchReq := &models.StockBatchCreateRequest{
 			IngredientType: item.IngredientType,
 			IngredientID:   item.IngredientID,
@@ -137,7 +143,7 @@ func CreatePurchase(req *models.PurchaseCreateRequest) (*models.Purchase, error)
 			ExpiryDate:     item.ExpiryDate,
 			Remark:         fmt.Sprintf("采购单: %s", purchase.PurchaseNo),
 		}
-		purchaseItemID := purchase.PurchaseItems[i].ID
+		purchaseItemID := item.ID
 		_, err := CreateStockBatchWithTx(tx, batchReq, &purchaseItemID)
 		if err != nil {
 			tx.Rollback()
@@ -187,6 +193,21 @@ func DeletePurchase(id uint) error {
 			} else {
 				tx.Model(&models.Ingredient{}).Where("id = ?", item.IngredientID).
 					Update("stock_quantity", gorm.Expr("stock_quantity - ?", item.Quantity))
+			}
+
+			var batches []models.StockBatch
+			if err := tx.Where("purchase_item_id = ?", item.ID).Find(&batches).Error; err != nil {
+				return err
+			}
+
+			for _, batch := range batches {
+				if err := tx.Where("batch_id = ?", batch.ID).Delete(&models.BatchOutRecord{}).Error; err != nil {
+					return err
+				}
+			}
+
+			if err := tx.Where("purchase_item_id = ?", item.ID).Delete(&models.StockBatch{}).Error; err != nil {
+				return err
 			}
 		}
 
