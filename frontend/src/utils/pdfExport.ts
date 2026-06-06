@@ -8,6 +8,39 @@ export interface PDFExportConfig {
   companyName?: string
 }
 
+const inlineStyles = (element: HTMLElement): void => {
+  const computed = window.getComputedStyle(element)
+  const cssText = computed.cssText || Array.from(computed).map(prop => 
+    `${prop}: ${computed.getPropertyValue(prop)}`
+  ).join('; ')
+  element.setAttribute('style', cssText)
+  
+  const children = element.children
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i] as HTMLElement
+    if (child.tagName !== 'CANVAS') {
+      inlineStyles(child)
+    }
+  }
+}
+
+const copyCanvasContents = (source: HTMLElement, target: HTMLElement): void => {
+  const sourceCanvases = source.querySelectorAll('canvas')
+  const targetCanvases = target.querySelectorAll('canvas')
+  
+  sourceCanvases.forEach((sourceCanvas, index) => {
+    if (targetCanvases[index]) {
+      const targetCanvas = targetCanvases[index]
+      targetCanvas.width = sourceCanvas.width
+      targetCanvas.height = sourceCanvas.height
+      const ctx = targetCanvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(sourceCanvas, 0, 0)
+      }
+    }
+  })
+}
+
 export const exportToPDF = async (elementId: string, config: PDFExportConfig) => {
   const element = document.getElementById(elementId)
   if (!element) {
@@ -18,10 +51,11 @@ export const exportToPDF = async (elementId: string, config: PDFExportConfig) =>
   wrapper.style.position = 'absolute'
   wrapper.style.left = '-9999px'
   wrapper.style.top = '0'
-  wrapper.style.width = element.offsetWidth + 'px'
+  wrapper.style.width = Math.max(element.offsetWidth, 1100) + 'px'
   wrapper.style.backgroundColor = '#1a1a2e'
   wrapper.style.padding = '20px'
   wrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  wrapper.style.boxSizing = 'border-box'
 
   const header = document.createElement('div')
   header.style.textAlign = 'center'
@@ -72,6 +106,11 @@ export const exportToPDF = async (elementId: string, config: PDFExportConfig) =>
   clonedContent.style.position = 'relative'
   clonedContent.style.left = 'auto'
   clonedContent.style.top = 'auto'
+  clonedContent.style.width = '100%'
+  clonedContent.style.boxSizing = 'border-box'
+
+  copyCanvasContents(element, clonedContent)
+  inlineStyles(clonedContent)
 
   wrapper.appendChild(header)
   wrapper.appendChild(clonedContent)
@@ -83,8 +122,14 @@ export const exportToPDF = async (elementId: string, config: PDFExportConfig) =>
       useCORS: true,
       logging: false,
       backgroundColor: '#1a1a2e',
-      windowWidth: wrapper.offsetWidth,
-      windowHeight: wrapper.offsetHeight
+      windowWidth: wrapper.scrollWidth,
+      windowHeight: wrapper.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      width: wrapper.scrollWidth,
+      height: wrapper.scrollHeight
     })
 
     const imgData = canvas.toDataURL('image/png')
@@ -93,14 +138,32 @@ export const exportToPDF = async (elementId: string, config: PDFExportConfig) =>
     const pdfHeight = pdf.internal.pageSize.getHeight()
     const imgWidth = canvas.width
     const imgHeight = canvas.height
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
-    const imgX = (pdfWidth - imgWidth * ratio) / 2
-    const imgY = 10
+
+    const ratio = pdfWidth / imgWidth
+    const pageHeight = pdfHeight - 20
+    const imgPageHeight = pageHeight / ratio
 
     pdf.setFillColor(26, 26, 46)
     pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
 
-    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio)
+    if (imgHeight <= imgPageHeight) {
+      pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, imgHeight * ratio)
+    } else {
+      let heightLeft = imgHeight
+      let position = 0
+
+      pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, imgHeight * ratio)
+      heightLeft -= imgPageHeight
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.setFillColor(26, 26, 46)
+        pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
+        pdf.addImage(imgData, 'PNG', 0, 10 + position * ratio, pdfWidth, imgHeight * ratio)
+        heightLeft -= imgPageHeight
+      }
+    }
 
     const pageCount = pdf.internal.getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
