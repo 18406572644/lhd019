@@ -361,3 +361,71 @@ INSERT INTO purchase_items (purchase_id, ingredient_type, ingredient_id, ingredi
 (4, 'spirit', 9, 'Patron Silver', 2.00, '瓶', 450.00, 900.00, 'PAT2024001', '2028-01-01'),
 (4, 'spirit', 4, 'Grey Goose', 2.00, '瓶', 380.00, 760.00, 'GOOSE2024001', '2027-01-01'),
 (4, 'spirit', 12, 'Baileys Irish Cream', 2.00, '瓶', 180.00, 360.00, 'BAI2024001', '2024-12-01');
+
+DROP TABLE IF EXISTS operating_costs;
+DROP TABLE IF EXISTS reconciliation_logs;
+DROP TABLE IF EXISTS custom_report_configs;
+
+CREATE TABLE operating_costs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cost_type VARCHAR(50) NOT NULL,
+    cost_name VARCHAR(100) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    period VARCHAR(20) NOT NULL DEFAULT 'monthly',
+    is_fixed BOOLEAN DEFAULT TRUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_cost_type (cost_type),
+    INDEX idx_period (period)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='运营成本表';
+
+CREATE TABLE reconciliation_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_no VARCHAR(50) NOT NULL,
+    payment_method VARCHAR(30) NOT NULL,
+    system_amount DECIMAL(10,2) NOT NULL,
+    actual_amount DECIMAL(10,2) NOT NULL,
+    difference DECIMAL(10,2) NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    reconciled_at TIMESTAMP NULL,
+    remark TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_order_no (order_no),
+    INDEX idx_payment_method (payment_method),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对账日志表';
+
+CREATE TABLE custom_report_configs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    report_name VARCHAR(100) NOT NULL,
+    report_type VARCHAR(50) NOT NULL,
+    config TEXT NOT NULL,
+    created_by VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_report_type (report_type),
+    INDEX idx_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='自定义报表配置表';
+
+INSERT INTO operating_costs (cost_type, cost_name, amount, period, is_fixed, description) VALUES
+('房租', '店面租金', 15000.00, 'monthly', TRUE, '每月固定房租支出'),
+('人工', '调酒师工资', 25000.00, 'monthly', TRUE, '3名调酒师基本工资'),
+('人工', '服务员基本工资', 12000.00, 'monthly', TRUE, '2名服务员基本工资'),
+('水电', '水电费', 3000.00, 'monthly', FALSE, '每月水电费用预估'),
+('设备折旧', '设备折旧摊销', 2000.00, 'monthly', TRUE, '制冷设备、音响等折旧'),
+('营销', '营销推广费用', 5000.00, 'monthly', FALSE, '社交媒体、活动推广'),
+('耗材', '一次性用品', 1500.00, 'monthly', FALSE, '纸巾、吸管、杯垫等'),
+('其他', '其他杂费', 1000.00, 'monthly', FALSE, '清洁费、维修费等');
+
+INSERT INTO reconciliation_logs (order_no, payment_method, system_amount, actual_amount, difference, status, remark) VALUES
+('ORD202401010001', '微信支付', 236.00, 236.00, 0.00, 'matched', '对账一致'),
+('ORD202401010002', '支付宝', 438.00, 438.00, 0.00, 'matched', '对账一致'),
+('ORD202401010003', '现金', 158.00, 158.00, 0.00, 'matched', '对账一致'),
+('ORD202401020001', '微信支付', 392.00, 392.00, 0.00, 'matched', '对账一致'),
+('ORD202401020002', '信用卡', 276.00, 276.00, 0.00, 'matched', '对账一致'),
+('ORD202401030001', '微信支付', 324.00, 324.00, 0.00, 'matched', '对账一致'),
+('ORD202401030002', '支付宝', 836.00, 836.00, 0.00, 'matched', '对账一致'),
+('ORD202401030003', '微信支付', 246.00, 246.00, 0.00, 'matched', '对账一致');

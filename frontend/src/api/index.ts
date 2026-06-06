@@ -209,6 +209,168 @@ export interface OrderForm {
   items: OrderItemForm[]
 }
 
+export interface DailyRevenueData {
+  date: string
+  revenue: number
+  orders: number
+  customers: number
+}
+
+export interface RevenueReport {
+  period: string
+  start_date: string
+  end_date: string
+  total_revenue: number
+  total_orders: number
+  total_customers: number
+  average_order: number
+  average_customer: number
+  yoy_growth: number
+  qoq_growth: number
+  yoy_previous: number
+  qoq_previous: number
+  daily_data?: DailyRevenueData[]
+}
+
+export interface CostBreakdownItem {
+  name: string
+  value: number
+  ratio: number
+}
+
+export interface CostAnalysisReport {
+  period: string
+  start_date: string
+  end_date: string
+  total_revenue: number
+  ingredient_cost: number
+  spirit_cost: number
+  total_material_cost: number
+  waste_cost: number
+  purchase_cost: number
+  operating_cost: number
+  total_cost: number
+  gross_profit: number
+  gross_margin: number
+  net_profit: number
+  net_margin: number
+  cost_breakdown: CostBreakdownItem[]
+}
+
+export interface CategorySales {
+  category: string
+  quantity: number
+  revenue: number
+  percentage: number
+}
+
+export interface RecipeSales {
+  recipe_id: number
+  recipe_name: string
+  category: string
+  quantity: number
+  revenue: number
+  cost: number
+  profit: number
+  profit_margin: number
+}
+
+export interface TimeSlotSales {
+  time_slot: string
+  quantity: number
+  revenue: number
+  orders: number
+}
+
+export interface CategorySalesReport {
+  period: string
+  start_date: string
+  end_date: string
+  category_sales: CategorySales[]
+  recipe_sales: RecipeSales[]
+  time_slot_sales: TimeSlotSales[]
+}
+
+export interface PaymentMethodDetail {
+  payment_method: string
+  order_count: number
+  total_amount: number
+  percentage: number
+}
+
+export interface ReconciliationLog {
+  id: number
+  order_no: string
+  payment_method: string
+  system_amount: number
+  actual_amount: number
+  difference: number
+  status: string
+  reconciled_at: string
+  remark: string
+  created_at: string
+}
+
+export interface PaymentReconciliation {
+  period: string
+  start_date: string
+  end_date: string
+  total_revenue: number
+  payment_methods: PaymentMethodDetail[]
+  reconciliation_logs: ReconciliationLog[]
+}
+
+export interface ProfitBreakdownItem {
+  name: string
+  value: number
+  type: string
+}
+
+export interface ProfitReport {
+  period: string
+  start_date: string
+  end_date: string
+  total_revenue: number
+  material_cost: number
+  waste_cost: number
+  operating_cost: number
+  total_expenses: number
+  gross_profit: number
+  gross_margin: number
+  net_profit: number
+  net_margin: number
+  profit_breakdown: ProfitBreakdownItem[]
+}
+
+export interface OperatingCost {
+  id: number
+  cost_type: string
+  cost_name: string
+  amount: number
+  period: string
+  is_fixed: boolean
+  description: string
+  created_at: string
+  updated_at: string
+}
+
+export interface OperatingCostForm {
+  cost_type: string
+  cost_name: string
+  amount: number
+  period: string
+  is_fixed: boolean
+  description: string
+}
+
+export interface FinanceFilterParams {
+  start_date?: string
+  end_date?: string
+  period?: string
+  category?: string
+  payment_method?: string
+}
+
 export const api = {
   getSpirits: (params?: { category?: string; keyword?: string }) =>
     request.get<ApiResponse<Spirit[]>>('/spirits', { params }),
@@ -258,5 +420,30 @@ export const api = {
   deletePurchase: (id: number) => request.delete<ApiResponse<void>>(`/purchases/${id}`),
 
   getSummary: (params?: { start_date?: string; end_date?: string }) =>
-    request.get<ApiResponse<any>>('/summary', { params })
+    request.get<ApiResponse<any>>('/summary', { params }),
+
+  getRevenueReport: (params?: FinanceFilterParams) =>
+    request.get<ApiResponse<RevenueReport>>('/finance/revenue', { params }),
+  getCostAnalysisReport: (params?: FinanceFilterParams) =>
+    request.get<ApiResponse<CostAnalysisReport>>('/finance/cost-analysis', { params }),
+  getCategorySalesReport: (params?: FinanceFilterParams) =>
+    request.get<ApiResponse<CategorySalesReport>>('/finance/category-sales', { params }),
+  getPaymentReconciliation: (params?: FinanceFilterParams) =>
+    request.get<ApiResponse<PaymentReconciliation>>('/finance/payment-reconciliation', { params }),
+  getProfitReport: (params?: FinanceFilterParams) =>
+    request.get<ApiResponse<ProfitReport>>('/finance/profit', { params }),
+  getOperatingCosts: () =>
+    request.get<ApiResponse<OperatingCost[]>>('/finance/operating-costs'),
+  createOperatingCost: (data: OperatingCostForm) =>
+    request.post<ApiResponse<OperatingCost>>('/finance/operating-costs', data),
+  updateOperatingCost: (id: number, data: OperatingCostForm) =>
+    request.put<ApiResponse<OperatingCost>>(`/finance/operating-costs/${id}`, data),
+  deleteOperatingCost: (id: number) =>
+    request.delete<ApiResponse<void>>(`/finance/operating-costs/${id}`),
+  getReconciliationLogs: (params?: FinanceFilterParams & { page?: number; page_size?: number }) =>
+    request.get<ApiResponse<ReconciliationLog[]>>('/finance/reconciliation-logs', { params }),
+  createReconciliationLog: (data: Partial<ReconciliationLog>) =>
+    request.post<ApiResponse<ReconciliationLog>>('/finance/reconciliation-logs', data),
+  updateReconciliationLog: (id: number, data: { status: string; remark: string }) =>
+    request.put<ApiResponse<ReconciliationLog>>(`/finance/reconciliation-logs/${id}`, data)
 }

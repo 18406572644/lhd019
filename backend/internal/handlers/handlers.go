@@ -448,3 +448,163 @@ func GetBusinessSummary(c *gin.Context) {
 	}
 	successResponse(c, summary)
 }
+
+func GetRevenueReport(c *gin.Context) {
+	var params models.FinanceFilterParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	report, err := services.GetRevenueReport(params)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, report)
+}
+
+func GetCostAnalysisReport(c *gin.Context) {
+	var params models.FinanceFilterParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	report, err := services.GetCostAnalysisReport(params)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, report)
+}
+
+func GetCategorySalesReport(c *gin.Context) {
+	var params models.FinanceFilterParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	report, err := services.GetCategorySalesReport(params)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, report)
+}
+
+func GetPaymentReconciliation(c *gin.Context) {
+	var params models.FinanceFilterParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	report, err := services.GetPaymentReconciliation(params)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, report)
+}
+
+func GetProfitReport(c *gin.Context) {
+	var params models.FinanceFilterParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	report, err := services.GetProfitReport(params)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, report)
+}
+
+func GetOperatingCosts(c *gin.Context) {
+	costs, err := services.GetOperatingCosts()
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, costs)
+}
+
+func CreateOperatingCost(c *gin.Context) {
+	var req models.OperatingCostCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	cost, err := services.CreateOperatingCost(&req)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, cost)
+}
+
+func UpdateOperatingCost(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var req models.OperatingCostCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	cost, err := services.UpdateOperatingCost(uint(id), &req)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, cost)
+}
+
+func DeleteOperatingCost(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err := services.DeleteOperatingCost(uint(id)); err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, nil)
+}
+
+func GetReconciliationLogs(c *gin.Context) {
+	var params models.FinanceFilterParams
+	params.PaymentMethod = c.Query("payment_method")
+	logs, total, err := services.GetReconciliationLogs(params)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, logs, total)
+}
+
+func CreateReconciliationLog(c *gin.Context) {
+	var log models.ReconciliationLog
+	if err := c.ShouldBindJSON(&log); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	createdLog, err := services.CreateReconciliationLog(&log)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, createdLog)
+}
+
+func UpdateReconciliationLog(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var req struct {
+		Status string `json:"status"`
+		Remark string `json:"remark"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorResponse(c, 400, err.Error())
+		return
+	}
+	log, err := services.UpdateReconciliationLog(uint(id), req.Status, req.Remark)
+	if err != nil {
+		errorResponse(c, 500, err.Error())
+		return
+	}
+	successResponse(c, log)
+}

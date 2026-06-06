@@ -13,10 +13,22 @@
         active-text-color="#d4af37"
         router
       >
-        <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
-          <el-icon><component :is="item.icon" /></el-icon>
-          <span>{{ item.title }}</span>
-        </el-menu-item>
+        <template v-for="item in menuItems" :key="item.path">
+          <el-sub-menu v-if="item.children" :index="item.path">
+            <template #title>
+              <el-icon><component :is="item.icon" /></el-icon>
+              <span>{{ item.title }}</span>
+            </template>
+            <el-menu-item v-for="child in item.children" :key="child.path" :index="child.path">
+              <el-icon><component :is="child.icon" /></el-icon>
+              <span>{{ child.title }}</span>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item v-else :index="item.path">
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.title }}</span>
+          </el-menu-item>
+        </template>
       </el-menu>
     </el-aside>
 
@@ -66,7 +78,12 @@ import {
   Delete,
   Star,
   ShoppingCart,
-  User
+  User,
+  Wallet,
+  TrendCharts,
+  PieChart,
+  Histogram,
+  CreditCard
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -74,6 +91,13 @@ const router = useRouter()
 
 const menuItems = [
   { path: '/dashboard', title: '营业概览', icon: DataAnalysis },
+  { path: '/finance/revenue', title: '财务报表', icon: Wallet, children: [
+    { path: '/finance/revenue', title: '营收报表', icon: TrendCharts },
+    { path: '/finance/cost', title: '成本分析', icon: PieChart },
+    { path: '/finance/sales', title: '分类销售', icon: Histogram },
+    { path: '/finance/payment', title: '支付对账', icon: CreditCard },
+    { path: '/finance/profit', title: '利润核算', icon: Wallet }
+  ]},
   { path: '/spirits', title: '基酒库存', icon: Goblet },
   { path: '/ingredients', title: '配料管理', icon: Food },
   { path: '/recipes', title: '调酒配方', icon: Menu },
@@ -83,10 +107,27 @@ const menuItems = [
   { path: '/purchases', title: '采购台账', icon: ShoppingCart }
 ]
 
+interface MenuItem {
+  path: string
+  title: string
+  icon?: any
+  children?: MenuItem[]
+}
+
+const flattenMenuItems = (items: MenuItem[]): MenuItem[] => {
+  return items.reduce((acc: MenuItem[], item) => {
+    if (item.children) {
+      return [...acc, ...flattenMenuItems(item.children)]
+    }
+    return [...acc, item]
+  }, [])
+}
+
 const activeMenu = computed(() => route.path)
 
 const currentPageTitle = computed(() => {
-  const item = menuItems.find(m => m.path === route.path)
+  const flatItems = flattenMenuItems(menuItems)
+  const item = flatItems.find(m => m.path === route.path)
   return item ? item.title : ''
 })
 </script>
@@ -122,11 +163,14 @@ const currentPageTitle = computed(() => {
     border-right: none !important;
     padding: 12px 0;
 
-    .el-menu-item {
+    .el-menu-item,
+    .el-sub-menu__title {
       margin: 4px 12px;
       border-radius: 8px;
       transition: all 0.3s ease;
+    }
 
+    .el-menu-item {
       &:hover {
         background: rgba(212, 175, 55, 0.1) !important;
       }
@@ -134,6 +178,23 @@ const currentPageTitle = computed(() => {
       &.is-active {
         background: rgba(212, 175, 55, 0.15) !important;
         border-left: 3px solid #d4af37;
+      }
+    }
+
+    .el-sub-menu {
+      .el-sub-menu__title {
+        &:hover {
+          background: rgba(212, 175, 55, 0.1) !important;
+        }
+      }
+
+      .el-menu {
+        background: transparent !important;
+      }
+
+      .el-menu-item {
+        margin: 2px 24px;
+        padding-left: 20px !important;
       }
     }
   }

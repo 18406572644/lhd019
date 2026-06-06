@@ -53,6 +53,44 @@ const routes: RouteRecordRaw[] = [
         name: 'Purchases',
         component: () => import('@/views/Purchases.vue'),
         meta: { title: '采购台账', icon: 'ShoppingCart' }
+      },
+      {
+        path: 'finance',
+        name: 'Finance',
+        redirect: '/finance/revenue',
+        meta: { title: '财务报表', icon: 'Wallet' },
+        children: [
+          {
+            path: 'revenue',
+            name: 'FinanceRevenue',
+            component: () => import('@/views/finance/RevenueReport.vue'),
+            meta: { title: '营收报表', icon: 'TrendCharts' }
+          },
+          {
+            path: 'cost',
+            name: 'FinanceCost',
+            component: () => import('@/views/finance/CostAnalysis.vue'),
+            meta: { title: '成本分析', icon: 'PieChart' }
+          },
+          {
+            path: 'sales',
+            name: 'FinanceSales',
+            component: () => import('@/views/finance/CategorySales.vue'),
+            meta: { title: '分类销售', icon: 'Histogram' }
+          },
+          {
+            path: 'payment',
+            name: 'FinancePayment',
+            component: () => import('@/views/finance/PaymentReconciliation.vue'),
+            meta: { title: '支付对账', icon: 'CreditCard' }
+          },
+          {
+            path: 'profit',
+            name: 'FinanceProfit',
+            component: () => import('@/views/finance/ProfitReport.vue'),
+            meta: { title: '利润核算', icon: 'Money' }
+          }
+        ]
       }
     ]
   }

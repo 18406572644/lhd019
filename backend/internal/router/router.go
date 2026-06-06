@@ -76,5 +76,21 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			summary.GET("", handlers.GetBusinessSummary)
 		}
+
+		finance := api.Group("/finance")
+		{
+			finance.GET("/revenue", handlers.GetRevenueReport)
+			finance.GET("/cost-analysis", handlers.GetCostAnalysisReport)
+			finance.GET("/category-sales", handlers.GetCategorySalesReport)
+			finance.GET("/payment-reconciliation", handlers.GetPaymentReconciliation)
+			finance.GET("/profit", handlers.GetProfitReport)
+			finance.GET("/operating-costs", handlers.GetOperatingCosts)
+			finance.POST("/operating-costs", handlers.CreateOperatingCost)
+			finance.PUT("/operating-costs/:id", handlers.UpdateOperatingCost)
+			finance.DELETE("/operating-costs/:id", handlers.DeleteOperatingCost)
+			finance.GET("/reconciliation-logs", handlers.GetReconciliationLogs)
+			finance.POST("/reconciliation-logs", handlers.CreateReconciliationLog)
+			finance.PUT("/reconciliation-logs/:id", handlers.UpdateReconciliationLog)
+		}
 	}
 }
